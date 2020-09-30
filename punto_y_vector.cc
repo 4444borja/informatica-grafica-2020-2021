@@ -18,6 +18,15 @@ struct Punto_Vector
             exit(1);
         }
     }
+
+    double modulo (Punto_Vector p) {
+        if (p.valor == 1) {
+            // es un punto
+            cerr << "No se puede calcular el modulo de un punto" << endl;
+            exit(1);
+        }
+        return sqrt(pow(p.x,2) + pow(p.y,2) + pow(p.z,2));
+    }
 };
 
 Punto_Vector operator+(const Punto_Vector &p1, const Punto_Vector &p2)
@@ -72,6 +81,31 @@ Punto_Vector operator/(const Punto_Vector &p1, const double &s)
         exit(1);
     }
     Punto_Vector p(p1.x * s, p1.y * s, p1.z * s, 1);
+    return p;
+}
+
+double operator·(const Punto_Vector &p1, const Punto_Vector &p2)
+{
+    if (p1.valor == 1 || p2.valor == 1){
+        // si alguno es punto
+        cerr << "Dot product con puntos no tiene sentido geometrico" << endl;
+        exit(1);
+    }
+
+    return p1.x*p2.x + p1.y*p2.y + p1.z*p2.z;
+}
+
+Punto_Vector operatorx(const Punto_Vector &p1, const Punto_Vector &p2)
+{
+    if (p1.valor == 1 || p2.valor == 1){
+        // si alguno es punto
+        cerr << "Producto vectorial con puntos no tiene sentido geometrico" << endl;
+        exit(1);
+    }
+    double x = (p1.y*p2.z - p1.z*p2.y);
+    double y = (p1.z*p2.x - p1.x*p2.z);
+    double z = (p1.x*p2.y - p1.y*p2.x);
+    Punto_Vector p( x, y, z, 0);
     return p;
 }
 
