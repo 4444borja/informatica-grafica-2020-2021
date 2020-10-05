@@ -20,13 +20,26 @@ struct Punto_Vector
         }
     }
 
-    double modulo (Punto_Vector p) {
-        if (p.valor == 1) {
+    double modulo () {
+        if (this->valor == 1) {
             // es un punto
             cerr << "No se puede calcular el modulo de un punto" << endl;
             exit(1);
         }
-        return sqrt(pow(p.x,2) + pow(p.y,2) + pow(p.z,2));
+        return sqrt(pow(this->x,2) + pow(this->y,2) + pow(this->z,2));
+    }
+
+    void imprimir () {
+        if (this->valor == 0) {
+            cout << "Direccion ";
+        }
+        else if (this->valor == 1) {
+            cout << "Punto ";
+        }
+        else{
+            cout << "Error en funcion imprimir ";
+        }
+        cout << this->x << ", " << this->y << ", " << this->z << endl;
     }
 };
 
@@ -48,11 +61,11 @@ Punto_Vector operator+(const Punto_Vector &p1, const Punto_Vector &p2)
 
 Punto_Vector operator-(const Punto_Vector &p1, const Punto_Vector &p2)
 {
-    if (p1.valor == 1 && p2.valor == 1){
+    /*if (p1.valor == 1 && p2.valor == 1){
         // si ambos son puntos
         cerr << "Restar dos puntos no tiene sentido geometrico" << endl;
         exit(1);
-    }
+    }*/
     int valor = 1;
     if (p1.valor == 1 && p2.valor == 0) {
         // p1 punto y p2 direccion
