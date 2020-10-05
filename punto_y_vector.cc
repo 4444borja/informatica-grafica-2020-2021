@@ -1,4 +1,5 @@
-#include <iostream>
+﻿#include <iostream>
+#include <math.h>
 using namespace std;
 
 struct Punto_Vector
@@ -84,7 +85,7 @@ Punto_Vector operator/(const Punto_Vector &p1, const double &s)
     return p;
 }
 
-double operator·(const Punto_Vector &p1, const Punto_Vector &p2)
+double operator^(const Punto_Vector &p1, const Punto_Vector &p2)
 {
     if (p1.valor == 1 || p2.valor == 1){
         // si alguno es punto
@@ -109,12 +110,12 @@ Punto_Vector operatorx(const Punto_Vector &p1, const Punto_Vector &p2)
     return p;
 }
 
-int main() {
+/*int main() {
     Punto_Vector A(2,3,4,1);
     Punto_Vector B(1,2,3,0);
 
     Punto_Vector C = A+B;
-    Punto_Vector D = A*5;
+    Punto_Vector D = B*5;
 
     cout << A.x << " " << A.y << " " << A.z << " " << A.valor << endl;
     cout << B.x << " " << B.y << " " << B.z << " " << B.valor << endl;
@@ -123,3 +124,4 @@ int main() {
 
     return 0;
 }
+*/
