@@ -97,5 +97,80 @@ int main(){
     Matrix inversaBase = InverseOfMatrix(CambioBase,4);
     // Las coordenadas globales son la inversa por la estacion espacial
     Punto_Vector spaceStationGlobal = inversaBase*spaceStation;
+
+
+
+    cout << "********************************" << endl;
+    cout << "* 4: Interplanetary connection *" << endl;
+    cout << "********************************" << endl;
+
+    // Introduccion de datos
+    double firstAxis[3] = {0,0,0};
+    double secondAxis[3] = {0,0,0};
+    double thirdAxis[3] = {0,0,0};
+    double inclination = 0;
+    double azimuth = 0;
+    cout << endl << "Enter First Axis, Longitude Tangent Direction: ";
+    cin >> firstAxis[0];
+    cin >> firstAxis[1];
+    cin >> firstAxis[2];
+    cout << "Enter Second Axis, Latitude Tangent Direction  ";
+    cin >> secondAxis[0];
+    cin >> secondAxis[1];
+    cin >> secondAxis[2];
+    cout << "Enter Third Axis, Surface Normal ";
+    cin >> thirdAxis[0];
+    cin >> thirdAxis[1];
+    cin >> thirdAxis[2];
+    cout << "Enter Inclination of the station ";
+    cin >> inclination;
+    cout << "Enter Azimuth of the station";
+    cin >> azimuth;
+
+    Punto_Vector estacionInicial = planetary_station(firstAxis, secondAxis, thirdAxis, inclination, azimuth);
+
+    // Introduccion de datos
+    double firstAxis2[3] = {0,0,0};
+    double secondAxis2[3] = {0,0,0};
+    double thirdAxis2[3] = {0,0,0};
+    double inclination2 = 0;
+    double azimuth2 = 0;
+    cout << endl << "Enter First Axis, Longitude Tangent Direction: ";
+    cin >> firstAxis2[0];
+    cin >> firstAxis2[1];
+    cin >> firstAxis2[2];
+    cout << "Enter Second Axis, Latitude Tangent Direction  ";
+    cin >> secondAxis2[0];
+    cin >> secondAxis2[1];
+    cin >> secondAxis2[2];
+    cout << "Enter Third Axis, Surface Normal ";
+    cin >> thirdAxis2[0];
+    cin >> thirdAxis2[1];
+    cin >> thirdAxis2[2];
+    cout << "Enter Inclination of the station ";
+    cin >> inclination2;
+    cout << "Enter Azimuth of the station";
+    cin >> azimuth2;
+
+    Punto_Vector estacionFinal = planetary_station(firstAxis2, secondAxis2, thirdAxis2, inclination2, azimuth2);
+
+    Punto_Vector centro_inicial = obtener_centro(firstAxis, secondAxis, thirdAxis);
+    Punto_Vector axis_inicial = Punto_Vector(firstAxis[0],firstAxis[1],firstAxis[2],0) / 2;
+    double radio_inicial = axis_inicial.modulo();
+
+    Punto_Vector direccion = estacionFinal - estacionInicial;
+
+    // valor por el que se divide la dirección que une los dos planetas
+    int valor_a_dividir = 100000;
+    Punto_Vector division = direccion / valor_a_dividir;
+
+    Punto_Vector punto_a_evaluar = estacionInicial + division;
+
+    // (p-c) * (p-c) - r^2
+    if ( (( (punto_a_evaluar - centro_inicial) ^ (punto_a_evaluar - centro_inicial) ) - (radio_inicial * radio_inicial) ) < 0) {
+        cout << endl << "ATENCIÓN: COLISIÓN DETECTADA" << endl << endl;
+    }
+
+    // TODO : 
     return 0;
 }
