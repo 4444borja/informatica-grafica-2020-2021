@@ -1,6 +1,5 @@
 
 #include<iostream>
-#include "punto_y_vector.cc"
 using namespace std;
 
 
@@ -10,12 +9,44 @@ struct Matrix
 
     float la_matriz[4][4];
 
-    Matrix(float valores[16]){
+    Matrix(const float valores[16]){
         for(int i = 0 ;i < 4 ; i++){
             for(int j = 0; j < 4 ; j++){
                 la_matriz[i][j] = valores[i*4+j];
             }
         }
+    }
+
+    Matrix(double firstAxis[3], double secondAxis[3], double thirdAxis[3], double origen[3]){
+        for(int i = 0; i < 3 ; i++){
+            la_matriz[i][0] = firstAxis[i];
+            la_matriz[i][1] = secondAxis[i];
+            la_matriz[i][2] = thirdAxis[i];
+            la_matriz[i][3] = origen[i];
+        }
+        la_matriz[3][0] = 0;
+        la_matriz[3][1] = 0;
+        la_matriz[3][2] = 0;
+        la_matriz[3][3] = 1;
+    }
+
+        Matrix(const Punto_Vector &axisx,const Punto_Vector &axisy,const Punto_Vector &axisz, const Punto_Vector &origen){
+        la_matriz[0][0] = axisx.x;
+        la_matriz[0][1] = axisy.x;
+        la_matriz[0][2] = axisz.x;
+        la_matriz[0][3] = origen.x;
+        la_matriz[1][0] = axisx.y;
+        la_matriz[1][1] = axisy.y;
+        la_matriz[1][2] = axisz.y;
+        la_matriz[1][3] = origen.y;
+        la_matriz[2][0] = axisx.z;
+        la_matriz[2][1] = axisy.z;
+        la_matriz[2][2] = axisz.z;
+        la_matriz[2][3] = origen.z;
+        la_matriz[3][0] = 0;
+        la_matriz[3][1] = 0;
+        la_matriz[3][2] = 0;
+        la_matriz[3][3] = 1;
     }
     void imprimirMatrix(){  
         for (int i = 0; i < 4; i++) { 
@@ -221,4 +252,4 @@ Matrix InverseOfMatrix(const Matrix &m1, int order)
     Punto_Vector res = A*ej2;
     res.imprimir();
     return 0;
-} */
+}*/
