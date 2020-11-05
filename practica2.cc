@@ -6,6 +6,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <vector>
+#include <cmath>
 
 using namespace std;
 
@@ -138,7 +139,48 @@ int main() {
         }
     }
 
+    // gamma
+    float G = 1;
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            imagen[i*width*3 + j*3] = imagen[i*width*3 + j*3] / max * 1;
+            imagen[i*width*3 + j*3] = pow(imagen[i*width*3 + j*3] / max , (1/G)) * max;
 
+            imagen[i*width*3 + j*3 + 1] = imagen[i*width*3 + j*3 + 1] / max * 1;
+            imagen[i*width*3 + j*3 + 1] = pow(imagen[i*width*3 + j*3 + 1] / max , (1/G)) * max;
+
+            imagen[i*width*3 + j*3 + 2] = imagen[i*width*3 + j*3 + 2] / max * 1;
+            imagen[i*width*3 + j*3 + 2] = pow(imagen[i*width*3 + j*3 + 2] / max , (1/G)) * max;
+        }
+    }
+
+    // gamma y clamp
+    float G = 1;
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (imagen[i*width*3 + j*3] > V) {
+                imagen[i*width*3 + j*3] = V;
+            } else {
+                imagen[i*width*3 + j*3] = imagen[i*width*3 + j*3] / V * 1;
+                imagen[i*width*3 + j*3] = pow(imagen[i*width*3 + j*3] / V , (1/G)) * V;
+            }
+
+            if (imagen[i*width*3 + j*3 + 1] > V) {
+                imagen[i*width*3 + j*3 + 1] = V;
+            } else {
+                imagen[i*width*3 + j*3 + 1] = imagen[i*width*3 + j*3 + 1] / V * 1;
+                imagen[i*width*3 + j*3 + 1] = pow(imagen[i*width*3 + j*3 + 1] / V , (1/G)) * V;
+            }
+
+            if (imagen[i*width*3 + j*3 + 2] > V) {
+                imagen[i*width*3 + j*3 + 2] = V;
+            } else {
+                imagen[i*width*3 + j*3 + 2] = imagen[i*width*3 + j*3 + 2] / V * 1;
+                imagen[i*width*3 + j*3 + 2] = pow(imagen[i*width*3 + j*3 + 2] / V , (1/G)) * V;
+            }
+            
+        }
+    }
 
 
     ////////////////////////////////////////
