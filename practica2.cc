@@ -93,94 +93,9 @@ int main() {
 
     // TODO: tone mapping //////////////////
 
-    // clamping
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            if (imagen[i*width*3 + j*3] > 1) {
-                imagen[i*width*3 + j*3] = 1;
-            }
-            if (imagen[i*width*3 + j*3 + 1] > 1) {
-                imagen[i*width*3 + j*3 + 1] = 1;
-            }
-            if (imagen[i*width*3 + j*3 + 2] > 1) {
-                imagen[i*width*3 + j*3 + 2] = 1;
-            }
-        }
-    }
+    
 
-    //eq
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            imagen[i*width*3 + j*3] = imagen[i*width*3 + j*3] / max * 1;
-            imagen[i*width*3 + j*3 + 1] = imagen[i*width*3 + j*3 + 1] / max * 1;
-            imagen[i*width*3 + j*3 + 2] = imagen[i*width*3 + j*3 + 2] / max * 1;
-        }
-    }
-
-    //eq and clamp
-    float V = 1;
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            if (imagen[i*width*3 + j*3] > V) {
-                imagen[i*width*3 + j*3] = V;
-            } else {
-                imagen[i*width*3 + j*3] = imagen[i*width*3 + j*3] / V * 1;
-            }
-            if (imagen[i*width*3 + j*3 + 1] > V) {
-                imagen[i*width*3 + j*3 + 1] = V;
-            } else {
-                imagen[i*width*3 + j*3 + 1] = imagen[i*width*3 + j*3 + 1] / V * 1;
-            }
-            if (imagen[i*width*3 + j*3 + 2] > V) {
-                imagen[i*width*3 + j*3 + 2] = V;
-            } else {
-                imagen[i*width*3 + j*3 + 2] = imagen[i*width*3 + j*3 + 2] / V * 1;
-            }
-        }
-    }
-
-    // gamma
-    float G = 1;
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            imagen[i*width*3 + j*3] = imagen[i*width*3 + j*3] / max * 1;
-            imagen[i*width*3 + j*3] = pow(imagen[i*width*3 + j*3] / max , (1/G)) * max;
-
-            imagen[i*width*3 + j*3 + 1] = imagen[i*width*3 + j*3 + 1] / max * 1;
-            imagen[i*width*3 + j*3 + 1] = pow(imagen[i*width*3 + j*3 + 1] / max , (1/G)) * max;
-
-            imagen[i*width*3 + j*3 + 2] = imagen[i*width*3 + j*3 + 2] / max * 1;
-            imagen[i*width*3 + j*3 + 2] = pow(imagen[i*width*3 + j*3 + 2] / max , (1/G)) * max;
-        }
-    }
-
-    // gamma y clamp
-    float G = 1;
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            if (imagen[i*width*3 + j*3] > V) {
-                imagen[i*width*3 + j*3] = V;
-            } else {
-                imagen[i*width*3 + j*3] = imagen[i*width*3 + j*3] / V * 1;
-                imagen[i*width*3 + j*3] = pow(imagen[i*width*3 + j*3] / V , (1/G)) * V;
-            }
-
-            if (imagen[i*width*3 + j*3 + 1] > V) {
-                imagen[i*width*3 + j*3 + 1] = V;
-            } else {
-                imagen[i*width*3 + j*3 + 1] = imagen[i*width*3 + j*3 + 1] / V * 1;
-                imagen[i*width*3 + j*3 + 1] = pow(imagen[i*width*3 + j*3 + 1] / V , (1/G)) * V;
-            }
-
-            if (imagen[i*width*3 + j*3 + 2] > V) {
-                imagen[i*width*3 + j*3 + 2] = V;
-            } else {
-                imagen[i*width*3 + j*3 + 2] = imagen[i*width*3 + j*3 + 2] / V * 1;
-                imagen[i*width*3 + j*3 + 2] = pow(imagen[i*width*3 + j*3 + 2] / V , (1/G)) * V;
-            }
-            
-        }
-    }
+    
 
 
     ////////////////////////////////////////
@@ -203,4 +118,106 @@ int main() {
     fichero.close();
 
     return 0;
+}
+
+vector<float> tone_mapping(int opcion, vector<float> imagen, int width, int height, float min, float max, float V, float gamma){
+
+    switch (opcion){
+        case 1:
+            // clamping
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    if (imagen[i*width*3 + j*3] > 1) {
+                        imagen[i*width*3 + j*3] = 1;
+                    }
+                    if (imagen[i*width*3 + j*3 + 1] > 1) {
+                        imagen[i*width*3 + j*3 + 1] = 1;
+                    }
+                    if (imagen[i*width*3 + j*3 + 2] > 1) {
+                        imagen[i*width*3 + j*3 + 2] = 1;
+                    }
+                }
+            }
+        case 2:
+            //eq
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    imagen[i*width*3 + j*3] = imagen[i*width*3 + j*3] / max * 1;
+                    imagen[i*width*3 + j*3 + 1] = imagen[i*width*3 + j*3 + 1] / max * 1;
+                    imagen[i*width*3 + j*3 + 2] = imagen[i*width*3 + j*3 + 2] / max * 1;
+                }
+            }
+        case 3:
+            //eq and clamp
+            float V = 1;
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    if (imagen[i*width*3 + j*3] > V) {
+                        imagen[i*width*3 + j*3] = V;
+                    } else {
+                        imagen[i*width*3 + j*3] = imagen[i*width*3 + j*3] / V * 1;
+                    }
+                    if (imagen[i*width*3 + j*3 + 1] > V) {
+                        imagen[i*width*3 + j*3 + 1] = V;
+                    } else {
+                        imagen[i*width*3 + j*3 + 1] = imagen[i*width*3 + j*3 + 1] / V * 1;
+                    }
+                    if (imagen[i*width*3 + j*3 + 2] > V) {
+                        imagen[i*width*3 + j*3 + 2] = V;
+                    } else {
+                        imagen[i*width*3 + j*3 + 2] = imagen[i*width*3 + j*3 + 2] / V * 1;
+                    }
+                }
+            }
+        case 4:
+            // gamma
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    imagen[i*width*3 + j*3] = imagen[i*width*3 + j*3] / max * 1;
+                    imagen[i*width*3 + j*3] = pow(imagen[i*width*3 + j*3] / max , (1/G)) * max;
+
+                    imagen[i*width*3 + j*3 + 1] = imagen[i*width*3 + j*3 + 1] / max * 1;
+                    imagen[i*width*3 + j*3 + 1] = pow(imagen[i*width*3 + j*3 + 1] / max , (1/G)) * max;
+
+                    imagen[i*width*3 + j*3 + 2] = imagen[i*width*3 + j*3 + 2] / max * 1;
+                    imagen[i*width*3 + j*3 + 2] = pow(imagen[i*width*3 + j*3 + 2] / max , (1/G)) * max;
+                }
+            }
+        case 5:
+            // gamma y clamp
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    if (imagen[i*width*3 + j*3] > V) {
+                        imagen[i*width*3 + j*3] = V;
+                    } else {
+                        imagen[i*width*3 + j*3] = imagen[i*width*3 + j*3] / V * 1;
+                        imagen[i*width*3 + j*3] = pow(imagen[i*width*3 + j*3] / V , (1/G)) * V;
+                    }
+
+                    if (imagen[i*width*3 + j*3 + 1] > V) {
+                        imagen[i*width*3 + j*3 + 1] = V;
+                    } else {
+                        imagen[i*width*3 + j*3 + 1] = imagen[i*width*3 + j*3 + 1] / V * 1;
+                        imagen[i*width*3 + j*3 + 1] = pow(imagen[i*width*3 + j*3 + 1] / V , (1/G)) * V;
+                    }
+
+                    if (imagen[i*width*3 + j*3 + 2] > V) {
+                        imagen[i*width*3 + j*3 + 2] = V;
+                    } else {
+                        imagen[i*width*3 + j*3 + 2] = imagen[i*width*3 + j*3 + 2] / V * 1;
+                        imagen[i*width*3 + j*3 + 2] = pow(imagen[i*width*3 + j*3 + 2] / V , (1/G)) * V;
+                    }
+                    
+                }
+            }
+        default:
+            cout << "Opciones:" << endl;
+            cout << "\t1: Clamping" << endl;
+            cout << "\t2: EQ" << endl;
+            cout << "\t3: Clamping y EQ (NECESARIO ARGUMENTO V)" << endl;
+            cout << "\t4: Curva Gamma (NECESARIO ARGUMENTO gamma)" << endl;
+            cout << "\t5: Clamping y curva Gamma (NESESARIOS ARGUMENTOS V y gamma)" << endl; 
+    }
+
+    return imagen;
 }
