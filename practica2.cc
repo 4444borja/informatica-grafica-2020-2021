@@ -10,6 +10,119 @@
 
 using namespace std;
 
+vector<float> tone_mapping(int opcion, vector<float> imagen, int width, int height, float min, float max, float V, float gamma){
+
+    switch (opcion){
+        case 1:
+            // clamping
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    if (imagen[i*width*3 + j*3] > 1) {
+                        imagen[i*width*3 + j*3] = 1;
+                    }
+                    if (imagen[i*width*3 + j*3 + 1] > 1) {
+                        imagen[i*width*3 + j*3 + 1] = 1;
+                    }
+                    if (imagen[i*width*3 + j*3 + 2] > 1) {
+                        imagen[i*width*3 + j*3 + 2] = 1;
+                    }
+                }
+            }
+            break;
+        case 2:
+            //eq
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    imagen[i*width*3 + j*3] = (imagen[i*width*3 + j*3] - min) / max * 1;
+                    imagen[i*width*3 + j*3 + 1] = (imagen[i*width*3 + j*3 + 1] - min) / max * 1;
+                    imagen[i*width*3 + j*3 + 2] = (imagen[i*width*3 + j*3 + 2] - min) / max * 1;
+                }
+            }
+            break;
+        case 3:
+            //eq and clamp
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    if (imagen[i*width*3 + j*3] > V) {
+                        //clamping
+                        imagen[i*width*3 + j*3] = V;
+                    } else {
+                        //eq
+                        imagen[i*width*3 + j*3] = (imagen[i*width*3 + j*3] - min) / V * 1;
+                    }
+                    if (imagen[i*width*3 + j*3 + 1] > V) {
+                        imagen[i*width*3 + j*3 + 1] = V;
+                    } else {
+                        imagen[i*width*3 + j*3 + 1] = (imagen[i*width*3 + j*3 + 1] - min) / V * 1;
+                    }
+                    if (imagen[i*width*3 + j*3 + 2] > V) {
+                        imagen[i*width*3 + j*3 + 2] = V;
+                    } else {
+                        imagen[i*width*3 + j*3 + 2] = (imagen[i*width*3 + j*3 + 2] - min) / V * 1;
+                    }
+                }
+            }
+            break;
+        case 4:
+            // gamma
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    // eq
+                    imagen[i*width*3 + j*3] = (imagen[i*width*3 + j*3] - min) / max * 1;
+                    // gamma
+                    imagen[i*width*3 + j*3] = pow(imagen[i*width*3 + j*3] / max , (1/gamma)) * max;
+
+                    imagen[i*width*3 + j*3 + 1] = (imagen[i*width*3 + j*3 + 1] - min) / max * 1;
+                    imagen[i*width*3 + j*3 + 1] = pow(imagen[i*width*3 + j*3 + 1] / max , (1/gamma)) * max;
+
+                    imagen[i*width*3 + j*3 + 2] = (imagen[i*width*3 + j*3 + 2] - min) / max * 1;
+                    imagen[i*width*3 + j*3 + 2] = pow(imagen[i*width*3 + j*3 + 2] / max , (1/gamma)) * max;
+                }
+            }
+            break;
+        case 5:
+            // gamma y clamp
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    if (imagen[i*width*3 + j*3] > V) {
+                        // clamping
+                        imagen[i*width*3 + j*3] = V;
+                    } else {
+                        // eq
+                        imagen[i*width*3 + j*3] = (imagen[i*width*3 + j*3] - min) / V * 1;
+                        // gamma
+                        imagen[i*width*3 + j*3] = pow(imagen[i*width*3 + j*3] / V , (1/gamma)) * V;
+                    }
+
+                    if (imagen[i*width*3 + j*3 + 1] > V) {
+                        imagen[i*width*3 + j*3 + 1] = V;
+                    } else {
+                        imagen[i*width*3 + j*3 + 1] = (imagen[i*width*3 + j*3 + 1] - min) / V * 1;
+                        imagen[i*width*3 + j*3 + 1] = pow(imagen[i*width*3 + j*3 + 1] / V , (1/gamma)) * V;
+                    }
+
+                    if (imagen[i*width*3 + j*3 + 2] > V) {
+                        imagen[i*width*3 + j*3 + 2] = V;
+                    } else {
+                        imagen[i*width*3 + j*3 + 2] = (imagen[i*width*3 + j*3 + 2] - min) / V * 1;
+                        imagen[i*width*3 + j*3 + 2] = pow(imagen[i*width*3 + j*3 + 2] / V , (1/gamma)) * V;
+                    }
+                    
+                }
+            }
+            break;
+        default:
+            cout << "Opciones:" << endl;
+            cout << "\t1: Clamping" << endl;
+            cout << "\t2: EQ" << endl;
+            cout << "\t3: Clamping y EQ (NECESARIO ARGUMENTO V)" << endl;
+            cout << "\t4: Curva Gamma (NECESARIO ARGUMENTO gamma)" << endl;
+            cout << "\t5: Clamping y curva Gamma (NESESARIOS ARGUMENTOS V y gamma)" << endl; 
+    }
+
+    return imagen;
+}
+
 int main() {
 
     string cadena;
@@ -71,30 +184,39 @@ int main() {
             imagen[i*width*3 + j*3] = (MAX * auxiliar_s) / res_color;
             if ((MAX * auxiliar_s) / res_color < min) {
                 min = (MAX * auxiliar_s) / res_color;
-            } else if ((MAX * auxiliar_s) / res_color > max){
+            }
+            else if ((MAX * auxiliar_s) / res_color > max){
                 max = (MAX * auxiliar_s) / res_color;
             }
             iss >> auxiliar_s;
             imagen[i*width*3 + j*3 + 1] = (MAX * auxiliar_s) / res_color;
             if ((MAX * auxiliar_s) / res_color < min) {
                 min = (MAX * auxiliar_s) / res_color;
-            } else if ((MAX * auxiliar_s) / res_color > max){
+            }
+            else if ((MAX * auxiliar_s) / res_color > max){
                 max = (MAX * auxiliar_s) / res_color;
             }
             iss >> auxiliar_s;
             imagen[i*width*3 + j*3 + 2] = (MAX * auxiliar_s) / res_color;
             if ((MAX * auxiliar_s) / res_color < min) {
                 min = (MAX * auxiliar_s) / res_color;
-            } else if ((MAX * auxiliar_s) / res_color > max){
+            }
+            else if ((MAX * auxiliar_s) / res_color > max){
                 max = (MAX * auxiliar_s) / res_color;
             }
         }
     }
 
-    // TODO: tone mapping //////////////////
+    // tone mapping //////////////////
+    /*cout << "Opciones:" << endl;
+            cout << "\t1: Clamping" << endl;
+            cout << "\t2: EQ" << endl;
+            cout << "\t3: Clamping y EQ (NECESARIO ARGUMENTO V)" << endl;
+            cout << "\t4: Curva Gamma (NECESARIO ARGUMENTO gamma)" << endl;
+            cout << "\t5: Clamping y curva Gamma (NESESARIOS ARGUMENTOS V y gamma)" << endl; */
 
     
-
+    imagen = tone_mapping(5, imagen, width, height, min, max, 0,0);
     
 
 
@@ -118,106 +240,4 @@ int main() {
     fichero.close();
 
     return 0;
-}
-
-vector<float> tone_mapping(int opcion, vector<float> imagen, int width, int height, float min, float max, float V, float gamma){
-
-    switch (opcion){
-        case 1:
-            // clamping
-            for (int i = 0; i < height; i++) {
-                for (int j = 0; j < width; j++) {
-                    if (imagen[i*width*3 + j*3] > 1) {
-                        imagen[i*width*3 + j*3] = 1;
-                    }
-                    if (imagen[i*width*3 + j*3 + 1] > 1) {
-                        imagen[i*width*3 + j*3 + 1] = 1;
-                    }
-                    if (imagen[i*width*3 + j*3 + 2] > 1) {
-                        imagen[i*width*3 + j*3 + 2] = 1;
-                    }
-                }
-            }
-        case 2:
-            //eq
-            for (int i = 0; i < height; i++) {
-                for (int j = 0; j < width; j++) {
-                    imagen[i*width*3 + j*3] = imagen[i*width*3 + j*3] / max * 1;
-                    imagen[i*width*3 + j*3 + 1] = imagen[i*width*3 + j*3 + 1] / max * 1;
-                    imagen[i*width*3 + j*3 + 2] = imagen[i*width*3 + j*3 + 2] / max * 1;
-                }
-            }
-        case 3:
-            //eq and clamp
-            float V = 1;
-            for (int i = 0; i < height; i++) {
-                for (int j = 0; j < width; j++) {
-                    if (imagen[i*width*3 + j*3] > V) {
-                        imagen[i*width*3 + j*3] = V;
-                    } else {
-                        imagen[i*width*3 + j*3] = imagen[i*width*3 + j*3] / V * 1;
-                    }
-                    if (imagen[i*width*3 + j*3 + 1] > V) {
-                        imagen[i*width*3 + j*3 + 1] = V;
-                    } else {
-                        imagen[i*width*3 + j*3 + 1] = imagen[i*width*3 + j*3 + 1] / V * 1;
-                    }
-                    if (imagen[i*width*3 + j*3 + 2] > V) {
-                        imagen[i*width*3 + j*3 + 2] = V;
-                    } else {
-                        imagen[i*width*3 + j*3 + 2] = imagen[i*width*3 + j*3 + 2] / V * 1;
-                    }
-                }
-            }
-        case 4:
-            // gamma
-            for (int i = 0; i < height; i++) {
-                for (int j = 0; j < width; j++) {
-                    imagen[i*width*3 + j*3] = imagen[i*width*3 + j*3] / max * 1;
-                    imagen[i*width*3 + j*3] = pow(imagen[i*width*3 + j*3] / max , (1/G)) * max;
-
-                    imagen[i*width*3 + j*3 + 1] = imagen[i*width*3 + j*3 + 1] / max * 1;
-                    imagen[i*width*3 + j*3 + 1] = pow(imagen[i*width*3 + j*3 + 1] / max , (1/G)) * max;
-
-                    imagen[i*width*3 + j*3 + 2] = imagen[i*width*3 + j*3 + 2] / max * 1;
-                    imagen[i*width*3 + j*3 + 2] = pow(imagen[i*width*3 + j*3 + 2] / max , (1/G)) * max;
-                }
-            }
-        case 5:
-            // gamma y clamp
-            for (int i = 0; i < height; i++) {
-                for (int j = 0; j < width; j++) {
-                    if (imagen[i*width*3 + j*3] > V) {
-                        imagen[i*width*3 + j*3] = V;
-                    } else {
-                        imagen[i*width*3 + j*3] = imagen[i*width*3 + j*3] / V * 1;
-                        imagen[i*width*3 + j*3] = pow(imagen[i*width*3 + j*3] / V , (1/G)) * V;
-                    }
-
-                    if (imagen[i*width*3 + j*3 + 1] > V) {
-                        imagen[i*width*3 + j*3 + 1] = V;
-                    } else {
-                        imagen[i*width*3 + j*3 + 1] = imagen[i*width*3 + j*3 + 1] / V * 1;
-                        imagen[i*width*3 + j*3 + 1] = pow(imagen[i*width*3 + j*3 + 1] / V , (1/G)) * V;
-                    }
-
-                    if (imagen[i*width*3 + j*3 + 2] > V) {
-                        imagen[i*width*3 + j*3 + 2] = V;
-                    } else {
-                        imagen[i*width*3 + j*3 + 2] = imagen[i*width*3 + j*3 + 2] / V * 1;
-                        imagen[i*width*3 + j*3 + 2] = pow(imagen[i*width*3 + j*3 + 2] / V , (1/G)) * V;
-                    }
-                    
-                }
-            }
-        default:
-            cout << "Opciones:" << endl;
-            cout << "\t1: Clamping" << endl;
-            cout << "\t2: EQ" << endl;
-            cout << "\t3: Clamping y EQ (NECESARIO ARGUMENTO V)" << endl;
-            cout << "\t4: Curva Gamma (NECESARIO ARGUMENTO gamma)" << endl;
-            cout << "\t5: Clamping y curva Gamma (NESESARIOS ARGUMENTOS V y gamma)" << endl; 
-    }
-
-    return imagen;
 }
