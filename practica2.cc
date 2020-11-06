@@ -128,7 +128,8 @@ int main() {
     string cadena;
 
     fstream fichero;
-    fichero.open("imagen.ppm");
+    //fichero.open("imagen.ppm");
+    fichero.open("mpi_atrium_3.ppm");
 
     string formato;
     int width, height;
@@ -216,7 +217,7 @@ int main() {
             cout << "\t5: Clamping y curva Gamma (NESESARIOS ARGUMENTOS V y gamma)" << endl; */
 
     
-    imagen = tone_mapping(5, imagen, width, height, min, max, 0,0);
+    //imagen = tone_mapping(1, imagen, width, height, min, max, 0,0);
     
 
 
