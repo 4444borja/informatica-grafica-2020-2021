@@ -10,21 +10,21 @@
 
 using namespace std;
 
-vector<float> tone_mapping(int opcion, vector<float> imagen, int width, int height, float min, float max, float V, float gamma){
+vector<float> tone_mapping(int opcion, vector<float> imagen, int width, int height, float min, float max, float V, float gamma, double MAX_R){
 
     switch (opcion){
         case 1:
             // clamping
             for (int i = 0; i < height; i++) {
                 for (int j = 0; j < width; j++) {
-                    if (imagen[i*width*3 + j*3] > 1) {
-                        imagen[i*width*3 + j*3] = 1;
+                    if (imagen[i*width*3 + j*3] > MAX_R) {
+                        imagen[i*width*3 + j*3] = MAX_R;
                     }
-                    if (imagen[i*width*3 + j*3 + 1] > 1) {
-                        imagen[i*width*3 + j*3 + 1] = 1;
+                    if (imagen[i*width*3 + j*3 + 1] > MAX_R) {
+                        imagen[i*width*3 + j*3 + 1] = MAX_R;
                     }
-                    if (imagen[i*width*3 + j*3 + 2] > 1) {
-                        imagen[i*width*3 + j*3 + 2] = 1;
+                    if (imagen[i*width*3 + j*3 + 2] > MAX_R) {
+                        imagen[i*width*3 + j*3 + 2] = MAX_R;
                     }
                 }
             }
@@ -33,9 +33,9 @@ vector<float> tone_mapping(int opcion, vector<float> imagen, int width, int heig
             //eq
             for (int i = 0; i < height; i++) {
                 for (int j = 0; j < width; j++) {
-                    imagen[i*width*3 + j*3] = (imagen[i*width*3 + j*3] - min) / max * 1;
-                    imagen[i*width*3 + j*3 + 1] = (imagen[i*width*3 + j*3 + 1] - min) / max * 1;
-                    imagen[i*width*3 + j*3 + 2] = (imagen[i*width*3 + j*3 + 2] - min) / max * 1;
+                    imagen[i*width*3 + j*3] = (imagen[i*width*3 + j*3] - min) / max * MAX_R;
+                    imagen[i*width*3 + j*3 + 1] = (imagen[i*width*3 + j*3 + 1] - min) / max * MAX_R;
+                    imagen[i*width*3 + j*3 + 2] = (imagen[i*width*3 + j*3 + 2] - min) / max * MAX_R;
                 }
             }
             break;
@@ -48,17 +48,17 @@ vector<float> tone_mapping(int opcion, vector<float> imagen, int width, int heig
                         imagen[i*width*3 + j*3] = V;
                     } else {
                         //eq
-                        imagen[i*width*3 + j*3] = (imagen[i*width*3 + j*3] - min) / V * 1;
+                        imagen[i*width*3 + j*3] = (imagen[i*width*3 + j*3] - min) / V * MAX_R;
                     }
                     if (imagen[i*width*3 + j*3 + 1] > V) {
                         imagen[i*width*3 + j*3 + 1] = V;
                     } else {
-                        imagen[i*width*3 + j*3 + 1] = (imagen[i*width*3 + j*3 + 1] - min) / V * 1;
+                        imagen[i*width*3 + j*3 + 1] = (imagen[i*width*3 + j*3 + 1] - min) / V * MAX_R;
                     }
                     if (imagen[i*width*3 + j*3 + 2] > V) {
                         imagen[i*width*3 + j*3 + 2] = V;
                     } else {
-                        imagen[i*width*3 + j*3 + 2] = (imagen[i*width*3 + j*3 + 2] - min) / V * 1;
+                        imagen[i*width*3 + j*3 + 2] = (imagen[i*width*3 + j*3 + 2] - min) / V * MAX_R;
                     }
                 }
             }
@@ -68,14 +68,14 @@ vector<float> tone_mapping(int opcion, vector<float> imagen, int width, int heig
             for (int i = 0; i < height; i++) {
                 for (int j = 0; j < width; j++) {
                     // eq
-                    imagen[i*width*3 + j*3] = (imagen[i*width*3 + j*3] - min) / max * 1;
+                    imagen[i*width*3 + j*3] = (imagen[i*width*3 + j*3] - min) / max * MAX_R;
                     // gamma
                     imagen[i*width*3 + j*3] = pow(imagen[i*width*3 + j*3] / max , (1/gamma)) * max;
 
-                    imagen[i*width*3 + j*3 + 1] = (imagen[i*width*3 + j*3 + 1] - min) / max * 1;
+                    imagen[i*width*3 + j*3 + 1] = (imagen[i*width*3 + j*3 + 1] - min) / max * MAX_R;
                     imagen[i*width*3 + j*3 + 1] = pow(imagen[i*width*3 + j*3 + 1] / max , (1/gamma)) * max;
 
-                    imagen[i*width*3 + j*3 + 2] = (imagen[i*width*3 + j*3 + 2] - min) / max * 1;
+                    imagen[i*width*3 + j*3 + 2] = (imagen[i*width*3 + j*3 + 2] - min) / max * MAX_R;
                     imagen[i*width*3 + j*3 + 2] = pow(imagen[i*width*3 + j*3 + 2] / max , (1/gamma)) * max;
                 }
             }
@@ -89,7 +89,7 @@ vector<float> tone_mapping(int opcion, vector<float> imagen, int width, int heig
                         imagen[i*width*3 + j*3] = V;
                     } else {
                         // eq
-                        imagen[i*width*3 + j*3] = (imagen[i*width*3 + j*3] - min) / V * 1;
+                        imagen[i*width*3 + j*3] = (imagen[i*width*3 + j*3] - min) / V * MAX_R;
                         // gamma
                         imagen[i*width*3 + j*3] = pow(imagen[i*width*3 + j*3] / V , (1/gamma)) * V;
                     }
@@ -97,14 +97,14 @@ vector<float> tone_mapping(int opcion, vector<float> imagen, int width, int heig
                     if (imagen[i*width*3 + j*3 + 1] > V) {
                         imagen[i*width*3 + j*3 + 1] = V;
                     } else {
-                        imagen[i*width*3 + j*3 + 1] = (imagen[i*width*3 + j*3 + 1] - min) / V * 1;
+                        imagen[i*width*3 + j*3 + 1] = (imagen[i*width*3 + j*3 + 1] - min) / V * MAX_R;
                         imagen[i*width*3 + j*3 + 1] = pow(imagen[i*width*3 + j*3 + 1] / V , (1/gamma)) * V;
                     }
 
                     if (imagen[i*width*3 + j*3 + 2] > V) {
                         imagen[i*width*3 + j*3 + 2] = V;
                     } else {
-                        imagen[i*width*3 + j*3 + 2] = (imagen[i*width*3 + j*3 + 2] - min) / V * 1;
+                        imagen[i*width*3 + j*3 + 2] = (imagen[i*width*3 + j*3 + 2] - min) / V * MAX_R;
                         imagen[i*width*3 + j*3 + 2] = pow(imagen[i*width*3 + j*3 + 2] / V , (1/gamma)) * V;
                     }
                     
@@ -129,12 +129,12 @@ int main() {
 
     fstream fichero;
     //fichero.open("imagen.ppm");
-    fichero.open("mpi_atrium_3.ppm");
+    fichero.open("forest_path.ppm");
 
     string formato;
     int width, height;
     int res_color;
-    float MAX = 1;
+    double MAX = 1;
 
     int i = 0;
     while(!fichero.eof()) {
@@ -209,31 +209,31 @@ int main() {
     }
 
     // tone mapping //////////////////
-    /*cout << "Opciones:" << endl;
+    cout << "Opciones:" << endl;
             cout << "\t1: Clamping" << endl;
             cout << "\t2: EQ" << endl;
             cout << "\t3: Clamping y EQ (NECESARIO ARGUMENTO V)" << endl;
             cout << "\t4: Curva Gamma (NECESARIO ARGUMENTO gamma)" << endl;
-            cout << "\t5: Clamping y curva Gamma (NESESARIOS ARGUMENTOS V y gamma)" << endl; */
+            cout << "\t5: Clamping y curva Gamma (NESESARIOS ARGUMENTOS V y gamma)" << endl; 
 
     
-    //imagen = tone_mapping(1, imagen, width, height, min, max, 0,0);
+    imagen = tone_mapping(2, imagen, width, height, min, max, 0,0,MAX);
     
 
 
     ////////////////////////////////////////
 
     ofstream out;
-    out.open("practica_2.ppm");
+    out.open("practica_2_3_2.ppm");
     out << formato << endl;
     out << width << " " << height << endl;
     out << res_color << endl;
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             
-            out << imagen[i*width*3 + j*3] * res_color / MAX << " " 
-            << imagen[i*width*3 + j*3 + 1] * res_color / MAX << " "
-            << imagen[i*width*3 + j*3 + 2] * res_color / MAX << " ";
+            out << (int)(imagen[i*width*3 + j*3] * res_color / MAX) << " " 
+            << (int)(imagen[i*width*3 + j*3 + 1] * res_color / MAX) << " "
+            << (int)(imagen[i*width*3 + j*3 + 2] * res_color / MAX) << " ";
         }
         out << endl;
     }
