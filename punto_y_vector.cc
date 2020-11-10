@@ -7,6 +7,13 @@ struct Punto_Vector
     double x, y, z;
     int valor;
 
+    Punto_Vector () {
+        x = 0;
+        y = 0;
+        z = 0;
+        valor = 1;
+    }
+
     Punto_Vector (double x, double y, double z, int valor) {
         if (valor == 0 || valor == 1) {
             this -> x = x;
@@ -27,6 +34,16 @@ struct Punto_Vector
             exit(1);
         }
         return sqrt(pow(this->x,2) + pow(this->y,2) + pow(this->z,2));
+    }
+
+    Punto_Vector normalizar () {
+        if (this->valor == 1) {
+            // es un punto
+            cerr << "No se puede normalizar un punto" << endl;
+            exit(1);
+        }
+        double mod = this->modulo();
+        return Punto_Vector(this->x/mod,this->y/mod,this->z/mod,0);
     }
 
     void imprimir () {
