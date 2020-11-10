@@ -100,7 +100,7 @@ Punto_Vector operator*(const Punto_Vector &p1, const double &s)
         cerr << "No se puede multiplicar un punto por un escalar" << endl;
         exit(1);
     }
-    Punto_Vector p(p1.x * s, p1.y * s, p1.z * s, 1);
+    Punto_Vector p(p1.x * s, p1.y * s, p1.z * s, 0);
     return p;
 }
 
