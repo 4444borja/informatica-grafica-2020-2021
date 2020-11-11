@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h> 
 #include <vector>
+#include <chrono>
 #include "punto_y_vector.cc"
 
 using namespace std;
@@ -86,6 +87,7 @@ int main(int argc, char **argv) {
                         Punto_Vector(1,0,0,0),
                         Punto_Vector(0,0,1,0));
 
+    chrono::steady_clock::time_point begin = chrono::steady_clock::now();
 
     for (int i = resolution-1; i >= 0; i--){
         for (int j = 0; j < resolution; j++){
@@ -97,26 +99,26 @@ int main(int argc, char **argv) {
                 Punto_Vector dir_rayo = r.direccion;
                 
                 // Esfera
-                //double a = pow(dir_rayo.modulo(), 2);
-                //double b = dir_rayo ^ (centro_esfera - origen_rayo) * 2;
-                //double c = pow((centro_esfera - origen_rayo).modulo(), 2) - pow(radio_esfera, 2);
+                double a = pow(dir_rayo.modulo(), 2);
+                double b = dir_rayo ^ (centro_esfera - origen_rayo) * 2;
+                double c = pow((centro_esfera - origen_rayo).modulo(), 2) - pow(radio_esfera, 2);
                 //cout << "VALORes: " << a << " " << b<< " "  << c << endl;
-                //if ((b*b - 4*a*c) < 0) {
+                if ((b*b - 4*a*c) < 0) {
                     // si es negativo no ha dado a nada, escribimos negro
-                //    out << "0 0 0 ";
-                //}
-                //else if((b*b - 4*a*c) == 0) {
-                //    // si es tangente (muy improbable)
-                //    out << "0 0 255 ";
-                //    cout << "TANGENTE" << endl;
-                //}
-                //else {
-                //    // ha dado a la esfera
-                //    out << "255 255 0 ";
-                //}
+                    out << "0 0 0 ";
+                }
+                else if((b*b - 4*a*c) == 0) {
+                    // si es tangente (muy improbable)
+                    out << "0 0 255 ";
+                    cout << "TANGENTE" << endl;
+                }
+                else {
+                    // ha dado a la esfera
+                    out << "255 255 0 ";
+                }
 
                 // Plano 
-                double paralelo = dir_rayo ^ normal_plano_limit;
+                /*double paralelo = dir_rayo ^ normal_plano_limit;
                 //cout << paralelo << endl;
                 if(paralelo == 0){
                     // El plano es paralelo, mostramos negro
@@ -141,11 +143,14 @@ int main(int argc, char **argv) {
                             out << "0 0 0 ";
                         }
                     }
-                }
+                }*/
 
             }
         }
         out << endl;
     }
+    chrono::steady_clock::time_point end = chrono::steady_clock::now();
+
+    cout << "Tiempo: " << (chrono::duration_cast<std::chrono::microseconds>(end - begin).count())/1000000.0 << " segundos" << endl;
     return 0;
 }
