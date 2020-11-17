@@ -9,6 +9,7 @@
 #include <chrono>
 #include <thread>
 #include "punto_y_vector.cc"
+#include "geometria.cc"
 
 using namespace std;
 
@@ -56,7 +57,7 @@ class Camera{
 
 };
 
-void rellenar_imagen_esfera(vector<float> &imagen, const int resolution, Punto_Vector centro_esfera, double radio_esfera, Camera cam, int thread){
+void rellenar_imagen_esfera(vector<float> &imagen, const int resolution, esfera escena[], Camera cam, int thread){
     int j1, j2;
     j1 = (thread - 1) * (resolution / 8);
     j2 = thread * (resolution / 8);
@@ -73,32 +74,27 @@ void rellenar_imagen_esfera(vector<float> &imagen, const int resolution, Punto_V
 
             Punto_Vector origen_rayo = r.origen;
             Punto_Vector dir_rayo = r.direccion;
-            
+            rgb colores_figura;
             // Esfera
-            double a = pow(dir_rayo.modulo(), 2);
-            double b = dir_rayo ^ (centro_esfera - origen_rayo) * 2;
-            double c = pow((centro_esfera - origen_rayo).modulo(), 2) - pow(radio_esfera, 2);
-            //cout << "VALORes: " << a << " " << b<< " "  << c << endl;
-            if ((b*b - 4*a*c) < 0) {
-                // si es negativo no ha dado a nada, escribimos negro
+
+            double t_valor_min = numeric_limits<double>::max() ;
+            for(int i = 0; i < 2 ; i++){
+                double t_valor = escena[i].get_interseccion(origen_rayo,dir_rayo);
+                if((t_valor < t_valor_min) && t_valor >= 0){
+                    t_valor_min = t_valor;
+                    colores_figura = escena[i].get_colores();
+                }
+            }
+            if(t_valor_min == numeric_limits<double>::max()){
                 imagen[i*resolution*3 + j*3] = 0;
                 imagen[i*resolution*3 + j*3 + 1] = 0;
                 imagen[i*resolution*3 + j*3 + 2] = 0;
             }
-            else if((b*b - 4*a*c) == 0) {
-                // si es tangente (muy improbable)
-                imagen[i*resolution*3 + j*3] = 0;
-                imagen[i*resolution*3 + j*3 + 1] = 255;
-                imagen[i*resolution*3 + j*3 + 2] = 0;
-                cout << "TANGENTE" << endl;
+            else{
+                imagen[i*resolution*3 + j*3] = colores_figura.get_red();
+                imagen[i*resolution*3 + j*3 + 1] = colores_figura.get_green();
+                imagen[i*resolution*3 + j*3 + 2] = colores_figura.get_blue();
             }
-            else {
-                // ha dado a la esfera
-                imagen[i*resolution*3 + j*3] = 255;
-                imagen[i*resolution*3 + j*3 + 1] = 255;
-                imagen[i*resolution*3 + j*3 + 2] = 0;
-            }
-            
         }
     }
 }
@@ -117,9 +113,23 @@ int main(int argc, char **argv) {
     out << resolution << " " << resolution << endl;
     out << 255 << endl;
 
+    esfera vector [2];
     // definir una esfera justo delante de la cámara a distancia 3
     Punto_Vector centro_esfera = Punto_Vector(0,0,15,1);
     double radio_esfera = 5;
+    esfera la_esfera;
+    la_esfera.set_values(centro_esfera,radio_esfera);
+    la_esfera.set_color(255,0,0);
+    
+    vector[0] = la_esfera;
+
+    Punto_Vector centro_esfera_2 = Punto_Vector(0,5,16,1);
+    double radio_esfera_2 = 5;
+    esfera la_esfera_2;
+    la_esfera_2.set_values(centro_esfera_2,radio_esfera_2);
+    la_esfera_2.set_color(0,255,0);
+    
+    vector[1] = la_esfera_2;
 
     // definir un plano limitado a distancia 20 de la cámaro por delante
     double distancia_origen_limit = 20;
@@ -201,7 +211,7 @@ int main(int argc, char **argv) {
     // generar threads
     std::thread threads[8];
     for (int t = 1; t <= 8; t++) {
-        threads[t-1] = std::thread(rellenar_imagen_esfera, std::ref(imagen), resolution, centro_esfera, radio_esfera, cam, t);
+        threads[t-1] = std::thread(rellenar_imagen_esfera, std::ref(imagen), resolution, vector, cam, t);
     }
     for (int t = 1; t <= 8; t++) {
         threads[t-1].join();
