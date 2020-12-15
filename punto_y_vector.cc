@@ -104,6 +104,18 @@ Punto_Vector operator*(const Punto_Vector &p1, const double &s)
     return p;
 }
 
+Punto_Vector operator*(const double &s, const Punto_Vector &p1)
+{
+    if (p1.valor == 1){
+        // si es punto
+        cerr << "No se puede multiplicar un punto por un escalar" << endl;
+        exit(1);
+    }
+    Punto_Vector p(p1.x * s, p1.y * s, p1.z * s, 0);
+    return p;
+}
+
+
 Punto_Vector operator/(const Punto_Vector &p1, const double &s)
 {
     if (p1.valor == 0){

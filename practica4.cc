@@ -10,6 +10,7 @@
 #include <thread>
 #include "punto_y_vector.cc"
 #include "geometria.cc"
+#include "Matrix.cc"
 
 using namespace std;
 
@@ -57,7 +58,7 @@ class Camera{
 
 };
 
-void rellenar_imagen_esfera(vector<float> &imagen, const int resolution, esfera escena[], Camera cam, int thread){
+void rellenar_imagen_esfera(vector<float> &imagen, const int resolution, esfera escena[], Camera cam, int thread, int rebotes){
     int j1, j2;
     j1 = (thread - 1) * (resolution / 8);
     j2 = thread * (resolution / 8);
@@ -73,37 +74,81 @@ void rellenar_imagen_esfera(vector<float> &imagen, const int resolution, esfera 
             imagen[i*resolution*3 + j*3 + 2] = 0;
             // para cada pixel
             Ray r = cam.get_center_ray(i,j,resolution);
+            double radiancia_total = 0;
             for(int k = 0; k < rebotes ; k++){
                 Punto_Vector origen_rayo = r.origen;
                 Punto_Vector dir_rayo = r.direccion;
                 rgb colores_figura;
                 // Esfera
-
+                int i_figura = 0;
                 double t_valor_min = numeric_limits<double>::max() ;
                 for(int i = 0; i < 2 ; i++){
                     double t_valor = escena[i].get_interseccion(origen_rayo,dir_rayo);
                     if((t_valor < t_valor_min) && t_valor >= 0){
                         t_valor_min = t_valor;
                         colores_figura = escena[i].get_colores();
+                        i_figura = i;
                     }
                 }
                 if(t_valor_min != numeric_limits<double>::max()){
                     // Punto en coordenadas globales
                     Punto_Vector punto_figura = r.origen + t_valor_min*dir_rayo;
+                    Punto_Vector centro_figura = escena[i].get_centro();
 
                     // Obtenemos la normal y creamos coordenadas locales en base a esa normal
+                    Punto_Vector vector_y = punto_figura - centro_figura; 
 
+                    double vectorIncl_1[4] = {cos(90),0,-sin(90),0};
+                    double vectorIncl_2[4] = {0,1,0,0};
+                    double vectorIncl_3[4] = {sin(90),0,cos(90),0};
+                    double vectorIncl_4[4] = {0,0,0,1};
+                    Matrix matrixIncl(vectorIncl_1,vectorIncl_2,vectorIncl_3,vectorIncl_4);
+
+                    Punto_Vector vector_z = vector_y*matrixIncl;
+
+                    Punto_Vector vector_x = operatorx(vector_y,vector_z);
+
+                    // Preguntar si el sistema de coordenadas tiene un origen de 0,0,0 o el punto de origen de la figura
+                    Matrix matrizLocal(vector_x,vector_y,vector_z,punto_figura);
 
                     // Usando las coordenadas locales, creamos dos num aleatorio entre [-90,90] grados
                     // Realizamos una inclinación y una azimuth, como en la practica 1, obtenemos una direccion en coordenadas locales
+                    int azimuth = rand() % 181 - 90;
+                    int inclination = rand() % 181 - 90;
+
+                    
+                    double aux_vectorIncl_1[4] = {cos(inclination),0,-sin(inclination),0};
+                    double aux_vectorIncl_2[4] = {0,1,0,0};
+                    double aux_vectorIncl_3[4] = {sin(inclination),0,cos(inclination),0};
+                    double aux_vectorIncl_4[4] = {0,0,0,1};
+                    Matrix aux_matrixIncl(aux_vectorIncl_1,aux_vectorIncl_2,aux_vectorIncl_3,aux_vectorIncl_4);
+                    // Realizamos en giro conforme al ángulo X, que es el vector que va desde el centro del planeta hasta el limite del mismo y es perpendicular
+                    // al vector Y
+                    double vectorAzim_1[4] = {1,0,0,0};
+                    double vectorAzim_2[4] = {0,cos(azimuth),sin(azimuth),0};
+                    double vectorAzim_3[4] = {0,-sin(azimuth),cos(azimuth),0};
+                    double vectorAzim_4[4] = {0,0,0,1};
+                    Matrix matrixAzim(vectorAzim_1,vectorAzim_2,vectorAzim_3,vectorAzim_4);
+                    // Creamos una direccion que sea el vector y y calculamos la nueva direccion con giros, primero en base a Inclinacion y después en base a Azimuth
+                    Punto_Vector dir_local = vector_y;
+                    dir_local = matrixIncl*dir_local;
+                    dir_local = matrixAzim*dir_local;
 
                     // Transformamos de coordenadas locales a globales, con la inversa y con eso tenemos el punto y direccion
 
+                    Matrix inversaBase = InverseOfMatrix(matrizLocal,4);
+                    Punto_Vector dir_global = inversaBase*dir_local;
                     // Sumamos el valor de reflectancia y demas al pixel.
-                }
 
-                r.origen = origen_figura
-                r.direccion = direccion_figura
+                    // fr = kd(objeto) / pi;
+                    // p(wi) = probabilidad de seguir la ruleta;
+                    //radiancia_total = radiancia_total*valor_w_normal * fr(objeto) / p(wi);
+                    double valor_w_normal = abs(vector_y^dir_global);
+                    r.origen = centro_figura;
+                    r.direccion = dir_global;
+                    
+                }
+                //Radiancia al pixel = radiancia_luz * radiancia_total;
             }
         }
     }
@@ -157,6 +202,7 @@ int main(int argc, char **argv) {
 
     chrono::steady_clock::time_point begin = chrono::steady_clock::now();
 
+    int rebotes = 4;
     /*for (int i = resolution-1; i >= 0; i--){
         for (int j = 0; j < resolution; j++){
             // para cada pixel
@@ -221,7 +267,7 @@ int main(int argc, char **argv) {
     // generar threads
     std::thread threads[8];
     for (int t = 1; t <= 8; t++) {
-        threads[t-1] = std::thread(rellenar_imagen_esfera, std::ref(imagen), resolution, vector, cam, t);
+        threads[t-1] = std::thread(rellenar_imagen_esfera, std::ref(imagen), resolution, vector, cam, t, rebotes);
     }
     for (int t = 1; t <= 8; t++) {
         threads[t-1].join();
