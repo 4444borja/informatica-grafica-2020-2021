@@ -171,6 +171,19 @@ int main(){
         cout << endl << "ATENCIÓN: COLISIÓN DETECTADA" << endl << endl;
     }
 
+
+    Punto_Vector direccion_2 = estacionInicial - estacionFinal;
+    Punto_Vector centro_inicial_2 = obtener_centro(firstAxis2, secondAxis2, thirdAxis2);
+    Punto_Vector axis_inicial_2 = Punto_Vector(firstAxis2[0],firstAxis2[1],firstAxis2[2],0) / 2;
+    double radio_inicial_2 = axis_inicial_2.modulo();
+    Punto_Vector division_2 = direccion_2 / valor_a_dividir;
+
+    Punto_Vector punto_a_evaluar_2 = estacionFinal + division;
+
+    // (p-c) * (p-c) - r^2
+    if ( (( (punto_a_evaluar_2 - centro_inicial_2) ^ (punto_a_evaluar_2 - centro_inicial_2) ) - (radio_inicial_2 * radio_inicial_2) ) < 0) {
+        cout << endl << "ATENCIÓN: COLISIÓN DETECTADA" << endl << endl;
+    }
     // TODO : 
     return 0;
 }
