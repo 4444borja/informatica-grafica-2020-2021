@@ -117,11 +117,11 @@ Punto_Vector operator/(const Punto_Vector &p1, const double &s)
 
 double operator^(const Punto_Vector &p1, const Punto_Vector &p2)
 {
-    //if (p1.valor == 1 || p2.valor == 1){
-    //    // si alguno es punto
-    //    cerr << "Dot product con puntos no tiene sentido geometrico, pero si tiene sentido matemático" << endl;
-    //    exit(1);
-    //A}
+    if (p1.valor == 1 || p2.valor == 1){
+        // si alguno es punto
+        cerr << "Dot product con puntos no tiene sentido geometrico" << endl;
+        exit(1);
+    }
 
     return p1.x*p2.x + p1.y*p2.y + p1.z*p2.z;
 }
