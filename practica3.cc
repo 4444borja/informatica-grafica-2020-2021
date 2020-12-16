@@ -78,11 +78,18 @@ void rellenar_imagen_esfera(vector<float> &imagen, const int resolution, esfera 
             // Esfera
 
             double t_valor_min = numeric_limits<double>::max() ;
+            double z_valor_min = numeric_limits<double>::max() ;
             for(int i = 0; i < 2 ; i++){
                 double t_valor = escena[i].get_interseccion(origen_rayo,dir_rayo);
-                if((t_valor < t_valor_min) && t_valor >= 0){
-                    t_valor_min = t_valor;
-                    colores_figura = escena[i].get_colores();
+                if(t_valor >= 0){
+                    Punto_Vector punto_actual = r.origen + t_valor*dir_rayo;
+                    double z_actual = punto_actual.z;
+                    cout << t_valor << endl;
+                    if(z_actual < z_valor_min){
+                        t_valor_min = t_valor;
+                        z_valor_min = z_actual;
+                        colores_figura = escena[i].get_colores();
+                    }
                 }
             }
             if(t_valor_min == numeric_limits<double>::max()){
@@ -123,7 +130,7 @@ int main(int argc, char **argv) {
     
     vector[0] = la_esfera;
 
-    Punto_Vector centro_esfera_2 = Punto_Vector(0,5,16,1);
+    Punto_Vector centro_esfera_2 = Punto_Vector(0,5,15,1);
     double radio_esfera_2 = 5;
     esfera la_esfera_2;
     la_esfera_2.set_values(centro_esfera_2,radio_esfera_2);
