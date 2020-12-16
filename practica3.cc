@@ -75,12 +75,23 @@ void rellenar_imagen_esfera(vector<float> &imagen, const int resolution, Punto_V
             Punto_Vector dir_rayo = r.direccion;
             
             // Esfera
-            double a = pow(dir_rayo.modulo(), 2);
-            double b = dir_rayo ^ (centro_esfera - origen_rayo) * 2;
-            double c = pow((centro_esfera - origen_rayo).modulo(), 2) - pow(radio_esfera, 2);
-            //cout << "VALORes: " << a << " " << b<< " "  << c << endl;
-            if ((b*b - 4*a*c) < 0) {
-                // si es negativo no ha dado a nada, escribimos negro
+
+            double t_valor_min = numeric_limits<double>::max() ;
+            double z_valor_min = numeric_limits<double>::max() ;
+            for(int i = 0; i < 2 ; i++){
+                double t_valor = escena[i].get_interseccion(origen_rayo,dir_rayo);
+                if(t_valor >= 0){
+                    Punto_Vector punto_actual = r.origen + t_valor*dir_rayo;
+                    double z_actual = punto_actual.z;
+                    cout << t_valor << endl;
+                    if(z_actual < z_valor_min){
+                        t_valor_min = t_valor;
+                        z_valor_min = z_actual;
+                        colores_figura = escena[i].get_colores();
+                    }
+                }
+            }
+            if(t_valor_min == numeric_limits<double>::max()){
                 imagen[i*resolution*3 + j*3] = 0;
                 imagen[i*resolution*3 + j*3 + 1] = 0;
                 imagen[i*resolution*3 + j*3 + 2] = 0;
@@ -120,6 +131,19 @@ int main(int argc, char **argv) {
     // definir una esfera justo delante de la cámara a distancia 3
     Punto_Vector centro_esfera = Punto_Vector(0,0,15,1);
     double radio_esfera = 5;
+    esfera la_esfera;
+    la_esfera.set_values(centro_esfera,radio_esfera);
+    la_esfera.set_color(255,0,0);
+    
+    vector[0] = la_esfera;
+
+    Punto_Vector centro_esfera_2 = Punto_Vector(0,5,15,1);
+    double radio_esfera_2 = 5;
+    esfera la_esfera_2;
+    la_esfera_2.set_values(centro_esfera_2,radio_esfera_2);
+    la_esfera_2.set_color(0,255,0);
+    
+    vector[1] = la_esfera_2;
 
     // definir un plano limitado a distancia 20 de la cámaro por delante
     double distancia_origen_limit = 20;
