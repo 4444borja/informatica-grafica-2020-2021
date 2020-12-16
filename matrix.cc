@@ -167,8 +167,8 @@ Matrix InverseOfMatrix(const Matrix &m1, int order)
         }
     }
 
-    printf("=== Matrix ===\n"); 
-    PrintMatrix( tempMatrix, order, order);
+    //printf("=== Matrix ===\n"); 
+    //PrintMatrix( tempMatrix, order, order);
   
     // Create the augmented matrix 
     // Add the identity matrix 
@@ -188,8 +188,8 @@ Matrix InverseOfMatrix(const Matrix &m1, int order)
     } 
   
     // Print matrix after interchange operations. 
-    printf("\n=== Augmented Matrix ===\n"); 
-    PrintMatrix(tempMatrix, order, order * 2); 
+    //printf("\n=== Augmented Matrix ===\n"); 
+    //PrintMatrix(tempMatrix, order, order * 2); 
   
     // Replace a row by sum of itself and a 
     // constant multiple of another row of the matrix 
@@ -204,8 +204,8 @@ Matrix InverseOfMatrix(const Matrix &m1, int order)
   
                     tempMatrix[j][k] -= tempMatrix[i][k] * temp; 
                 } 
-                printf("\n=== Matrix Actual ===\n"); 
-                PrintMatrix(tempMatrix, order, order * 2); 
+                //printf("\n=== Matrix Actual ===\n"); 
+                //PrintMatrix(tempMatrix, order, order * 2); 
 
             } 
         } 
@@ -222,8 +222,8 @@ Matrix InverseOfMatrix(const Matrix &m1, int order)
     } 
   
     // print the resultant Inverse matrix. 
-    printf("\n=== Inverse Matrix ===\n"); 
-    PrintInverse(tempMatrix, order, 2 * order); 
+    //printf("\n=== Inverse Matrix ===\n"); 
+    //PrintInverse(tempMatrix, order, 2 * order); 
     float valor_res[16];
     for (int i = 0; i < 4; i++) { 
         for (int j = 4; j < 8; j++) { 

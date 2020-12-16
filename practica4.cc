@@ -8,9 +8,12 @@
 #include <vector>
 #include <chrono>
 #include <thread>
+#include <tuple>
 #include "punto_y_vector.cc"
 #include "geometria.cc"
 #include "Matrix.cc"
+
+#define PI 3.14159265358979
 
 using namespace std;
 
@@ -58,6 +61,97 @@ class Camera{
 
 };
 
+std::tuple<int,int,int> funcionL(esfera escena[], Ray r){
+    Punto_Vector origen_rayo = r.origen;
+    Punto_Vector dir_rayo = r.direccion;
+    rgb colores_figura;
+    // Esfera
+    int i_figura = 0;
+    double t_valor_min = numeric_limits<double>::max();
+
+    for(int i = 0; i < 2 ; i++){
+        double t_valor = escena[i].get_interseccion(origen_rayo,dir_rayo);
+        if((t_valor < t_valor_min) && t_valor >= 0){
+            t_valor_min = t_valor;
+            colores_figura = escena[i].get_colores();
+            i_figura = i;
+        }
+    }
+    if(t_valor_min != numeric_limits<double>::max()){
+        // Punto en coordenadas globales
+        Punto_Vector punto_figura = r.origen + t_valor_min*dir_rayo;
+        Punto_Vector centro_figura = escena[i_figura].get_centro();
+
+        // Obtenemos la normal y creamos coordenadas locales en base a esa normal
+        Punto_Vector vector_y = punto_figura - centro_figura; 
+
+        double vectorIncl_1[4] = {cos(90),0,-sin(90),0};
+        double vectorIncl_2[4] = {0,1,0,0};
+        double vectorIncl_3[4] = {sin(90),0,cos(90),0};
+        double vectorIncl_4[4] = {0,0,0,1};
+        Matrix matrixIncl(vectorIncl_1,vectorIncl_2,vectorIncl_3,vectorIncl_4);
+
+        Punto_Vector vector_z = vector_y*matrixIncl;
+
+        Punto_Vector vector_x = operatorx(vector_y,vector_z);
+
+        // Preguntar si el sistema de coordenadas tiene un origen de 0,0,0 o el punto de origen de la figura
+        Matrix matrizLocal(vector_x,vector_y,vector_z,punto_figura);
+
+        // PARA MATERIAL DIFUSO
+        ////////////////////////
+        float random1 = (float) rand()/RAND_MAX;
+        float random2 = (float) rand()/RAND_MAX;
+
+        double zeta = acos(sqrt(1 - (double) random1));
+        double fi = 2 * PI * (double) random2;
+
+        Punto_Vector direc_local = Punto_Vector(sin(zeta) * cos(fi),
+                                                    sin(zeta) * sin(fi),
+                                                    cos(zeta),
+                                                    0);
+        // Transformamos de coordenadas locales a globales, con la inversa y con eso tenemos el punto y direccion
+        Matrix inversaBaseM = InverseOfMatrix(matrizLocal,4);
+        Punto_Vector direc_global = inversaBaseM*direc_local;
+
+        double valor_w_normal = abs(vector_y^direc_global);
+        r.origen = punto_figura;
+        r.direccion = direc_global;
+        ////////////////////////////////////////
+        ////////////////////////////////////////
+
+        // color de la esfera con la que se ha chocado
+        rgb color = escena[i_figura].get_colores();
+        //cout << "colores vvv: " << color.get_red() << " " << color.get_green() << " " <<  color.get_blue() << endl;
+
+        // ruleta rusa para ver si seguimos
+        if( rand() % 10 < 8){
+            // el rayo sigue
+            std::tuple<int, int, int> siguiente = funcionL(escena,r);
+
+            // pasamos los colores a [0, 1] para multiplicarlos
+            float red = (get<0>(siguiente) / 255.0) * (color.get_red() / 255.0);
+            float green = (get<1>(siguiente) / 255.0) * (color.get_green() / 255.0);
+            float blue = (get<2>(siguiente) / 255.0) * (color.get_blue() / 255.0);
+
+            if(red > 1 || red < 0){
+                cout << "ERROR:"<< endl;
+                cout << get<0>(siguiente) << endl;
+                cout << color.get_red() << endl;
+                cout << (get<0>(siguiente) / 255.0) << endl;
+                cout << (color.get_red() / 255.0) << endl;
+                cout << red << endl;
+            }
+
+            return std::make_tuple(red*255, green*255, blue*255);
+        }
+        else {
+            //ruleta rusa dice que paramos, devolvemos negro
+            return std::make_tuple(0, 0, 0);
+        }
+    }
+}
+
 
 
 void rellenar_imagen_esfera(vector<float> &imagen, const int resolution, esfera escena[], Camera cam, int thread, int rebotes){
@@ -71,76 +165,23 @@ void rellenar_imagen_esfera(vector<float> &imagen, const int resolution, esfera 
     }
     for (int i = resolution-1; i >= 0; i--){
         for (int j = j1; j < j2; j++){
+    /*for (int i = resolution-1; i >= 0; i--){
+        for (int j = 0; j < resolution; j++){*/
             // para cada pixel
-            imagen[i*resolution*3 + j*3] = 0;
-            imagen[i*resolution*3 + j*3 + 1] = 0;
-            imagen[i*resolution*3 + j*3 + 2] = 0;
+            //imagen[i*resolution*3 + j*3] = 0;
+            //imagen[i*resolution*3 + j*3 + 1] = 0;
+            //imagen[i*resolution*3 + j*3 + 2] = 0;
             
             Ray r = cam.get_center_ray(i,j,resolution);
             double radiancia_total = 0;
-            for(int k = 0; k < rebotes ; k++){
-                Punto_Vector origen_rayo = r.origen;
-                Punto_Vector dir_rayo = r.direccion;
-                rgb colores_figura;
-                // Esfera
-                int i_figura = 0;
-                double t_valor_min = numeric_limits<double>::max() ;
-                for(int i = 0; i < 2 ; i++){
-                    double t_valor = escena[i].get_interseccion(origen_rayo,dir_rayo);
-                    if((t_valor < t_valor_min) && t_valor >= 0){
-                        t_valor_min = t_valor;
-                        colores_figura = escena[i].get_colores();
-                        i_figura = i;
-                    }
-                }
-                if(t_valor_min != numeric_limits<double>::max()){
-                    // Punto en coordenadas globales
-                    Punto_Vector punto_figura = r.origen + t_valor_min*dir_rayo;
-                    Punto_Vector centro_figura = escena[i].get_centro();
 
-                    // Obtenemos la normal y creamos coordenadas locales en base a esa normal
-                    Punto_Vector vector_y = punto_figura - centro_figura; 
+            std::tuple<int, int, int> colorPixel = funcionL(escena,r);
 
-                    double vectorIncl_1[4] = {cos(90),0,-sin(90),0};
-                    double vectorIncl_2[4] = {0,1,0,0};
-                    double vectorIncl_3[4] = {sin(90),0,cos(90),0};
-                    double vectorIncl_4[4] = {0,0,0,1};
-                    Matrix matrixIncl(vectorIncl_1,vectorIncl_2,vectorIncl_3,vectorIncl_4);
+            //cout << "colores: " << get<0>(colorPixel) << " " << get<1>(colorPixel) << " " <<  get<2>(colorPixel) << endl;
 
-                    Punto_Vector vector_z = vector_y*matrixIncl;
-
-                    Punto_Vector vector_x = operatorx(vector_y,vector_z);
-
-                    // Preguntar si el sistema de coordenadas tiene un origen de 0,0,0 o el punto de origen de la figura
-                    Matrix matrizLocal(vector_x,vector_y,vector_z,punto_figura);
-
-                    // PARA MATERIAL DIFUSO
-                    float random1 = (float) rand()/RAND_MAX;
-                    float random2 = (float) rand()/RAND_MAX;
-
-                    double zeta = acos(sqrt(1 - (double) random1));
-                    double fi = 2 * PI * (double) random2;
-
-                    Punto_Vector direc_local = Punto_Vector(sin(zeta) * cos(fi),
-                                                                sin(zeta) * sin(fi),
-                                                                cos(zeta),
-                                                                0);
-                    // Transformamos de coordenadas locales a globales, con la inversa y con eso tenemos el punto y direccion
-                    Matrix inversaBaseM = InverseOfMatrix(matrizLocal,4);
-                    Punto_Vector direc_global = inversaBaseM*direc_local;
-
-                    double valor_w_normal = abs(vector_y^direc_global);
-                    r.origen = centro_figura;
-                    r.direccion = direc_global;
-
-                    // Sumamos el valor de reflectancia y demas al pixel.
-                    // fr = kd(objeto) / pi;
-                    // p(wi) = probabilidad de seguir la ruleta;
-                    //radiancia_total = radiancia_total*valor_w_normal * fr(objeto) / p(wi);
-                    
-                }
-                //Radiancia al pixel = radiancia_luz * radiancia_total;
-            }
+            imagen[i*resolution*3 + j*3] = get<0>(colorPixel);
+            imagen[i*resolution*3 + j*3 + 1] = get<1>(colorPixel);
+            imagen[i*resolution*3 + j*3 + 2] = get<2>(colorPixel);
         }
     }
 }
@@ -204,6 +245,8 @@ int main(int argc, char **argv) {
         threads[t-1].join();
     }
 
+    //rellenar_imagen_esfera(imagen,resolution,vector,cam,1,rebotes);
+
     // volcarlo al fichero
     for (int i = 0; i < resolution; i++) {
         for (int j = 0; j < resolution; j++) {
@@ -216,6 +259,6 @@ int main(int argc, char **argv) {
 
     chrono::steady_clock::time_point end = chrono::steady_clock::now();
 
-    cout << "Tiempo: " << (chrono::duration_cast<std::chrono::microseconds>(end - begin).count())/1000000.0 << " segundos" << endl;
+    std::cout << "Tiempo: " << (chrono::duration_cast<std::chrono::microseconds>(end - begin).count())/1000000.0 << " segundos" << std::endl;
     return 0;
 }
