@@ -71,7 +71,7 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
     int i_figura = 0;
     double t_valor_min = numeric_limits<double>::max();
 
-    for(int i = 0; i < 5 ; i++){
+    for(int i = 0; i < 8 ; i++){
         double t_valor = escena[i]->get_interseccion(origen_rayo,dir_rayo);
         if((t_valor < t_valor_min) && t_valor >= 0){
             t_valor_min = t_valor;
@@ -80,7 +80,7 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
         }
     }
     if(t_valor_min != numeric_limits<double>::max()){
-        if (i_figura == 2) {
+        if (i_figura == 4) {
             // ha intersectado con la cuarta figura, que consideramos luz
             //cout << "interseccion con luz" << endl;
             return std::make_tuple(255, 255, 255);
@@ -233,7 +233,7 @@ int main(int argc, char **argv) {
 
     int number_of_rays = atoi(argv[1]);
 
-    const int resolution = 1024;
+    const int resolution = 500;
 
     vector<float> imagen (resolution * resolution * 3);
 
@@ -244,7 +244,7 @@ int main(int argc, char **argv) {
     out << 255 << endl;
     
 
-    Geometria *vector [5];
+    Geometria *vector [8];
     // definir una esfera justo delante de la cámara a distancia 3
     Punto_Vector centro_esfera = Punto_Vector(0,0,15,1);
     double radio_esfera = 5;
@@ -252,20 +252,25 @@ int main(int argc, char **argv) {
     
     vector[0] = la_esfera;
 
-    Punto_Vector centro_esfera_2 = Punto_Vector(0,5,16,1);
+    Punto_Vector centro_esfera_2 = Punto_Vector(0,5,20,1);
     double radio_esfera_2 = 5;
     Geometria *la_esfera_2 = new Esfera(centro_esfera_2, radio_esfera_2, 0, 255, 0);
     
     vector[1] = la_esfera_2;
 
-    Punto_Vector centro_esfera_3 = Punto_Vector(10,10,16,1);
+    Punto_Vector centro_esfera_3 = Punto_Vector(10,10,20,1);
     double radio_esfera_3 = 6;
     Geometria *la_esfera_3 = new Esfera(centro_esfera_3, radio_esfera_3, 0, 255, 0);
 
-    vector[2] = new Plano(Punto_Vector(0,0.1,0,1),30,0,255,0 );
-    vector[3] = new Plano(Punto_Vector(0,-0.1,-0,1),30,0,255,255 );
+    vector[2] = new Plano(Punto_Vector(0,0.1,0,1),30,180,255,0 );
+    vector[3] = new Plano(Punto_Vector(0,-0.1,0,1),30,0,255,255 );
 
-    vector[4] = new Esfera(Punto_Vector(10,5,10,1), 5, 255, 0, 255);
+    vector[4] = new Plano(Punto_Vector(0.1,0,0,1),30,180,255,0 );
+    vector[5] = new Plano(Punto_Vector(-0.1,0,0,1),30,0,255,180 );
+
+    vector[6] = new Plano(Punto_Vector(0,0,-0.1,1),50,180,255,180 );
+
+    vector[7] = new Esfera(Punto_Vector(10,5,10,1), 5, 255, 0, 255);
 
     // definir un plano limitado a distancia 20 de la cámaro por delante
     double distancia_origen_limit = 20;
