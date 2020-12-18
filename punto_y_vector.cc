@@ -15,6 +15,7 @@ struct Punto_Vector
     }
 
     Punto_Vector (double x, double y, double z, int valor) {
+        //cout << x << y <<z <<valor << endl;
         if (valor == 0 || valor == 1) {
             this -> x = x;
             this -> y = y;
@@ -25,6 +26,14 @@ struct Punto_Vector
             cerr << "El cuarto argumento solo admite 0 (direcciones) y 1 (puntos)" << endl;
             exit(1);
         }
+    }
+
+    void cambiarValor(int v){
+        if (v != 0 && v != 1){
+            cout << "error en punto_y_vector.cc: no se puede cambiar a un valor que no sea 1 o 0" << endl;
+            exit(1);
+        }
+        valor = v;
     }
 
     double modulo () {
@@ -129,11 +138,11 @@ Punto_Vector operator/(const Punto_Vector &p1, const double &s)
 
 double operator^(const Punto_Vector &p1, const Punto_Vector &p2)
 {
-    if (p1.valor == 1 || p2.valor == 1){
+    /*if (p1.valor == 1 || p2.valor == 1){
         // si alguno es punto
         cerr << "Dot product con puntos no tiene sentido geometrico" << endl;
         exit(1);
-    }
+    }*/
 
     return p1.x*p2.x + p1.y*p2.y + p1.z*p2.z;
 }

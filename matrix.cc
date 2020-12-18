@@ -198,8 +198,14 @@ Matrix InverseOfMatrix(const Matrix &m1, int order)
         for (int j = 0; j < order; j++) { 
   
             if (j != i) { 
-  
-                temp = tempMatrix[j][i] / tempMatrix[i][i]; 
+                
+                if (tempMatrix[i][i] == 0){
+                    temp = 0;
+                }
+                else{
+                    temp = tempMatrix[j][i] / tempMatrix[i][i]; 
+                }
+                
                 for (int k = 0; k < 2 * order; k++) { 
   
                     tempMatrix[j][k] -= tempMatrix[i][k] * temp; 
@@ -217,7 +223,10 @@ Matrix InverseOfMatrix(const Matrix &m1, int order)
   
         temp = tempMatrix[i][i]; 
         for (int j = 0; j < 2 * order; j++) { 
-            tempMatrix[i][j] = tempMatrix[i][j] / temp; 
+            if (temp!=0){
+                tempMatrix[i][j] = tempMatrix[i][j] / temp; 
+            }
+            
         } 
     } 
   

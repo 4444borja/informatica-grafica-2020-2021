@@ -28,6 +28,11 @@ class Plano : public Geometria {
             return interseccion;
         }
 
+        Punto_Vector get_centro(){
+            cout << "SE HA INVOCADO LA FUNCIÓN get_centro EN UN OBJETO DE TIPO PLANO" << endl;
+            exit(1);
+        }
+
     protected:
         Punto_Vector normal_plano;
         double distancia_origen;

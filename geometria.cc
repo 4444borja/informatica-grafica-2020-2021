@@ -9,6 +9,15 @@ class Geometria {
             colores.set_values(R, G, B);
         }
 
+        virtual Punto_Vector get_centro(){
+            cout << "SE HA INTENTADO LLAMAR A get_centro EN UN OBJETO DE TIPO GEOMETRIA" << endl;
+            exit(1);
+        }
+        virtual Punto_Vector get_normal() {
+            cout << "SE HA INTENTADO LLAMAR A get_normal EN UN OBJETO DE TIPO GEOMETRIA" << endl;
+            exit(1);
+        }
+
         virtual double get_interseccion(Punto_Vector origen_rayo, Punto_Vector dir_rayo) { 
             return 0;
         }

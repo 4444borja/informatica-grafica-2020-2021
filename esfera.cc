@@ -42,6 +42,12 @@ class Esfera : public Geometria {
         }
 
 
+        Punto_Vector get_normal(){
+            cout << "SE HA INVOCADO LA FUNCIÓN get_normal EN UN OBJETO DE TIPO ESFERA" << endl;
+            exit(1);
+        }
+
+
 
 
     protected:

@@ -12,6 +12,8 @@
 #include "punto_y_vector.cc"
 #include "geometria.cc"
 #include "Matrix.cc"
+#include "esfera.cc"
+#include "plano.cc"
 
 #define PI 3.14159265358979
 
@@ -61,7 +63,7 @@ class Camera{
 
 };
 
-std::tuple<int,int,int> funcionL(esfera escena[], Ray r){
+std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
     Punto_Vector origen_rayo = r.origen;
     Punto_Vector dir_rayo = r.direccion;
     rgb colores_figura;
@@ -69,29 +71,44 @@ std::tuple<int,int,int> funcionL(esfera escena[], Ray r){
     int i_figura = 0;
     double t_valor_min = numeric_limits<double>::max();
 
-    for(int i = 0; i < 3 ; i++){
-        double t_valor = escena[i].get_interseccion(origen_rayo,dir_rayo);
+    for(int i = 0; i < 5 ; i++){
+        double t_valor = escena[i]->get_interseccion(origen_rayo,dir_rayo);
         if((t_valor < t_valor_min) && t_valor >= 0){
             t_valor_min = t_valor;
-            colores_figura = escena[i].get_colores();
+            colores_figura = escena[i]->get_colores();
             i_figura = i;
         }
     }
     if(t_valor_min != numeric_limits<double>::max()){
         if (i_figura == 2) {
-            // ha intersectado con la tercera figura, que consideramos luz
+            // ha intersectado con la cuarta figura, que consideramos luz
             //cout << "interseccion con luz" << endl;
             return std::make_tuple(255, 255, 255);
         }
         else {
             // NO HA INTERSECTADO CON LUZ, PERO SI CON OTRO OBJETO
 
+            Punto_Vector vector_y;
             // Punto en coordenadas globales
             Punto_Vector punto_figura = r.origen + t_valor_min*dir_rayo;
-            Punto_Vector centro_figura = escena[i_figura].get_centro();
 
-            // Obtenemos la normal y creamos coordenadas locales en base a esa normal
-            Punto_Vector vector_y = punto_figura - centro_figura; 
+            if (dynamic_cast<Esfera*>(escena[i_figura]) == nullptr)
+            {
+                // no es una esfera -> es un PLANO
+                vector_y = escena[i_figura]->get_normal();
+
+                vector_y.cambiarValor(0);
+            }
+            if (dynamic_cast<Plano*>(escena[i_figura]) == nullptr)
+            {
+                // no es un plano -> es una ESFERA
+                Punto_Vector centro_figura = escena[i_figura]->get_centro();
+
+                // Obtenemos la normal y creamos coordenadas locales en base a esa normal
+                vector_y = punto_figura - centro_figura; 
+            }
+
+           
 
             double vectorIncl_1[4] = {cos(90),0,-sin(90),0};
             double vectorIncl_2[4] = {0,1,0,0};
@@ -129,7 +146,7 @@ std::tuple<int,int,int> funcionL(esfera escena[], Ray r){
             ////////////////////////////////////////
 
             // color de la esfera con la que se ha chocado
-            rgb color = escena[i_figura].get_colores();
+            rgb color = escena[i_figura]->get_colores();
             //cout << "colores vvv: " << color.get_red() << " " << color.get_green() << " " <<  color.get_blue() << endl;
 
             // ruleta rusa para ver si seguimos
@@ -164,7 +181,7 @@ std::tuple<int,int,int> funcionL(esfera escena[], Ray r){
 
 
 
-void rellenar_imagen_esfera(vector<float> &imagen, const int resolution, esfera escena[], Camera cam, int thread, int number_of_rays){
+void rellenar_imagen_esfera(vector<float> &imagen, const int resolution,  Geometria *escena[], Camera cam, int thread, int number_of_rays){
     int j1, j2;
     j1 = (thread - 1) * (resolution / 8);
     j2 = thread * (resolution / 8);
@@ -208,9 +225,15 @@ void rellenar_imagen_esfera(vector<float> &imagen, const int resolution, esfera 
 
 
 int main(int argc, char **argv) {
-    int number_of_rays = 10;
 
-    const int resolution = 512;
+    if(argc < 2) {
+        cout << "Argument ppp missing" << endl;
+        exit(1);
+    }
+
+    int number_of_rays = atoi(argv[1]);
+
+    const int resolution = 1024;
 
     vector<float> imagen (resolution * resolution * 3);
 
@@ -221,31 +244,28 @@ int main(int argc, char **argv) {
     out << 255 << endl;
     
 
-    esfera vector [3];
+    Geometria *vector [5];
     // definir una esfera justo delante de la cámara a distancia 3
     Punto_Vector centro_esfera = Punto_Vector(0,0,15,1);
     double radio_esfera = 5;
-    esfera la_esfera;
-    la_esfera.set_values(centro_esfera,radio_esfera);
-    la_esfera.set_color(255,0,0);
+    Geometria *la_esfera = new Esfera(centro_esfera, radio_esfera, 255, 0, 0);
     
     vector[0] = la_esfera;
 
     Punto_Vector centro_esfera_2 = Punto_Vector(0,5,16,1);
     double radio_esfera_2 = 5;
-    esfera la_esfera_2;
-    la_esfera_2.set_values(centro_esfera_2,radio_esfera_2);
-    la_esfera_2.set_color(0,255,0);
+    Geometria *la_esfera_2 = new Esfera(centro_esfera_2, radio_esfera_2, 0, 255, 0);
     
     vector[1] = la_esfera_2;
 
     Punto_Vector centro_esfera_3 = Punto_Vector(10,10,16,1);
-    double radio_esfera_3 = 4;
-    esfera la_esfera_3;
-    la_esfera_3.set_values(centro_esfera_3,radio_esfera_3);
-    la_esfera_3.set_color(0,255,0);
+    double radio_esfera_3 = 6;
+    Geometria *la_esfera_3 = new Esfera(centro_esfera_3, radio_esfera_3, 0, 255, 0);
 
-    vector[2] = la_esfera_3;
+    vector[2] = new Plano(Punto_Vector(0,0.1,0,1),30,0,255,0 );
+    vector[3] = new Plano(Punto_Vector(0,-0.1,-0,1),30,0,255,255 );
+
+    vector[4] = new Esfera(Punto_Vector(10,5,10,1), 5, 255, 0, 255);
 
     // definir un plano limitado a distancia 20 de la cámaro por delante
     double distancia_origen_limit = 20;
@@ -271,6 +291,7 @@ int main(int argc, char **argv) {
     for (int t = 1; t <= 8; t++) {
         threads[t-1].join();
     }
+    //rellenar_imagen_esfera(imagen,resolution,vector,cam,0,number_of_rays);
 
     //rellenar_imagen_esfera(imagen,resolution,vector,cam,1,rebotes);
 
