@@ -71,7 +71,7 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
     int i_figura = 0;
     double t_valor_min = numeric_limits<double>::max();
 
-    for(int i = 0; i < 8 ; i++){
+    for(int i = 0; i < 9 ; i++){
         double t_valor = escena[i]->get_interseccion(origen_rayo,dir_rayo);
         if((t_valor < t_valor_min) && t_valor >= 0){
             t_valor_min = t_valor;
@@ -96,8 +96,6 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
             {
                 // no es una esfera -> es un PLANO
                 vector_y = escena[i_figura]->get_normal();
-
-                vector_y.cambiarValor(0);
             }
             if (dynamic_cast<Plano*>(escena[i_figura]) == nullptr)
             {
@@ -120,7 +118,7 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
 
             Punto_Vector vector_x = operatorx(vector_y,vector_z);
 
-            // Preguntar si el sistema de coordenadas tiene un origen de 0,0,0 o el punto de origen de la figura
+
             Matrix matrizLocal(vector_x,vector_y,vector_z,punto_figura);
 
             // PARA MATERIAL DIFUSO
@@ -128,25 +126,23 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
             float random1 = (float) rand()/RAND_MAX;
             float random2 = (float) rand()/RAND_MAX;
 
-            double zeta = acos(sqrt(1 - (double) random1));
-            double fi = 2 * PI * (double) random2;
+            double zeta = acos(sqrt(1 - random2));
+            double fi = 2 * PI * random1;
 
             Punto_Vector direc_local = Punto_Vector(sin(zeta) * cos(fi),
                                                         sin(zeta) * sin(fi),
                                                         cos(zeta),
                                                         0);
             // Transformamos de coordenadas locales a globales, con la inversa y con eso tenemos el punto y direccion
-            Matrix inversaBaseM = InverseOfMatrix(matrizLocal,4);
-            Punto_Vector direc_global = inversaBaseM*direc_local;
+            Punto_Vector direc_global = matrizLocal*direc_local;
 
             double valor_w_normal = abs(vector_y^direc_global);
             r.origen = punto_figura;
             r.direccion = direc_global;
             ////////////////////////////////////////
-            ////////////////////////////////////////
 
             // color de la esfera con la que se ha chocado
-            rgb color = escena[i_figura]->get_colores();
+            // rgb color = escena[i_figura]->get_colores();
             //cout << "colores vvv: " << color.get_red() << " " << color.get_green() << " " <<  color.get_blue() << endl;
 
             // ruleta rusa para ver si seguimos
@@ -155,16 +151,16 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
                 std::tuple<int, int, int> siguiente = funcionL(escena,r);
 
                 // pasamos los colores a [0, 1] para multiplicarlos
-                float red = (get<0>(siguiente) / 255.0) * (color.get_red() / 255.0);
-                float green = (get<1>(siguiente) / 255.0) * (color.get_green() / 255.0);
-                float blue = (get<2>(siguiente) / 255.0) * (color.get_blue() / 255.0);
+                float red = (get<0>(siguiente) / 255.0) * (colores_figura.get_red() / 255.0);
+                float green = (get<1>(siguiente) / 255.0) * (colores_figura.get_green() / 255.0);
+                float blue = (get<2>(siguiente) / 255.0) * (colores_figura.get_blue() / 255.0);
 
                 if(red > 1 || red < 0 || green > 1 || green < 0 || blue > 1 || blue < 0){
                     cout << "ERROR:"<< endl;
                     cout << get<0>(siguiente) << endl;
-                    cout << color.get_red() << endl;
+                    cout << colores_figura.get_red() << endl;
                     cout << (get<0>(siguiente) / 255.0) << endl;
-                    cout << (color.get_red() / 255.0) << endl;
+                    cout << (colores_figura.get_red() / 255.0) << endl;
                     cout << red << endl;
                 }
 
@@ -244,7 +240,7 @@ int main(int argc, char **argv) {
     out << 255 << endl;
     
 
-    Geometria *vector [8];
+    Geometria *vector [9];
     // definir una esfera justo delante de la cámara a distancia 3
     Punto_Vector centro_esfera = Punto_Vector(0,0,15,1);
     double radio_esfera = 5;
@@ -262,24 +258,16 @@ int main(int argc, char **argv) {
     double radio_esfera_3 = 6;
     Geometria *la_esfera_3 = new Esfera(centro_esfera_3, radio_esfera_3, 0, 255, 0);
 
-    vector[2] = new Plano(Punto_Vector(0,0.1,0,1),30,180,255,0 );
-    vector[3] = new Plano(Punto_Vector(0,-0.1,0,1),30,0,255,255 );
+    vector[2] = new Plano(Punto_Vector(0,0.1,0,0),30,180,255,0 );
+    vector[3] = new Plano(Punto_Vector(0,-0.1,0,0),30,0,255,255 );
 
-    vector[4] = new Plano(Punto_Vector(0.1,0,0,1),30,180,255,0 );
-    vector[5] = new Plano(Punto_Vector(-0.1,0,0,1),30,0,255,180 );
+    vector[4] = new Plano(Punto_Vector(0.1,0,0,0),30,180,255,0 );
+    vector[5] = new Plano(Punto_Vector(-0.1,0,0,0),30,0,255,180 );
 
-    vector[6] = new Plano(Punto_Vector(0,0,-0.1,1),50,180,255,180 );
+    vector[6] = new Plano(Punto_Vector(0,0,-0.1,0),50,180,255,180 );
+    vector[7] = new Plano(Punto_Vector(0,0,0.1,0),-50,180,255,180 );    
 
-    vector[7] = new Esfera(Punto_Vector(10,5,10,1), 5, 255, 0, 255);
-
-    // definir un plano limitado a distancia 20 de la cámaro por delante
-    double distancia_origen_limit = 20;
-    double plano_x = 0.0;
-    double plano_y = 0.0;
-    double plano_z = -1.0;
-    Punto_Vector normal_plano_limit = Punto_Vector(plano_x,plano_y,plano_z,0);
-
-    
+    vector[8] = new Esfera(Punto_Vector(10,5,10,1), 5, 255, 0, 255);
 
     Camera cam = Camera(Punto_Vector(0,0,0,1),
                         Punto_Vector(0,1,0,0),
