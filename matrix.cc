@@ -1,7 +1,7 @@
 
 #include<iostream>
 using namespace std;
-
+#define N 4
 
 // Declaración:
 struct Matrix
@@ -13,6 +13,14 @@ struct Matrix
         for(int i = 0 ;i < 4 ; i++){
             for(int j = 0; j < 4 ; j++){
                 la_matriz[i][j] = valores[i*4+j];
+            }
+        }
+    }
+
+        Matrix(const float valores[4][4]){
+        for(int i = 0 ;i < 4 ; i++){
+            for(int j = 0; j < 4 ; j++){
+                la_matriz[i][j] = valores[i][j];
             }
         }
     }
@@ -155,6 +163,8 @@ void PrintInverse(float ar[][8], int n, int m)
     return; 
 }
 
+
+
 Matrix InverseOfMatrix(const Matrix &m1, int order) 
 { 
     // Matrix Declaration. 
@@ -167,26 +177,37 @@ Matrix InverseOfMatrix(const Matrix &m1, int order)
         }
     }
 
-    //printf("=== Matrix ===\n"); 
-    //PrintMatrix( tempMatrix, order, order);
+    printf("=== Matrix ===\n"); 
+    PrintMatrix( tempMatrix, order, order);
   
     // Create the augmented matrix 
     // Add the identity matrix 
     // of order at the end of original matrix. 
     for (int i = 0; i < 4; i++) { 
   
-        for (int j = 0; j < 2 * 4; j++) { 
+        for (int j = 4; j < 8; j++) { 
             // Add '1' at the diagonal places of 
             // the matrix to create a identity matirx 
-            if(j > 3){
-                if (j == (i + 4)) 
-                    tempMatrix[i][j] = 1; 
-                else
-                    tempMatrix[i][j] = 0;
-            }
+            if (j == (i + 4)) 
+                tempMatrix[i][j] = 1; 
+            else
+                tempMatrix[i][j] = 0;
         } 
     } 
   
+    for (int i = order - 1; i > 0; i--) {
+ 
+        // Swapping each and every element of the two rows
+        if (tempMatrix[i - 1][0] < tempMatrix[i][0]){
+            for (int j = 0; j < 2 * order; j++) {
+                // Swapping of the row, if above
+                // condition satisfied.
+                temp = tempMatrix[i][j];
+                tempMatrix[i][j] = tempMatrix[i - 1][j];
+                tempMatrix[i - 1][j] = temp;
+            }
+        }
+    }
     // Print matrix after interchange operations. 
     //printf("\n=== Augmented Matrix ===\n"); 
     //PrintMatrix(tempMatrix, order, order * 2); 
@@ -199,19 +220,11 @@ Matrix InverseOfMatrix(const Matrix &m1, int order)
   
             if (j != i) { 
                 
-                if (tempMatrix[i][i] == 0){
-                    temp = 0;
+                temp = tempMatrix[j][i] / tempMatrix[i][i];
+                for (int k = 0; k < 2 * order; k++) {
+ 
+                    tempMatrix[j][k] -= tempMatrix[i][k] * temp;
                 }
-                else{
-                    temp = tempMatrix[j][i] / tempMatrix[i][i]; 
-                }
-                
-                for (int k = 0; k < 2 * order; k++) { 
-  
-                    tempMatrix[j][k] -= tempMatrix[i][k] * temp; 
-                } 
-                //printf("\n=== Matrix Actual ===\n"); 
-                //PrintMatrix(tempMatrix, order, order * 2); 
 
             } 
         } 
@@ -242,6 +255,9 @@ Matrix InverseOfMatrix(const Matrix &m1, int order)
     Matrix res(valor_res);
     return res;
 } 
+
+
+
 
 /*int main() {
     float valores[16] = { 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0};
