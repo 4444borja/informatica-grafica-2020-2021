@@ -36,6 +36,18 @@ struct Punto_Vector
         valor = v;
     }
 
+    void modificar(double x, double y, double z, int valor){
+       if (valor == 0 || valor == 1) {
+            this -> x = x;
+            this -> y = y;
+            this -> z = z;
+            this -> valor = valor;
+        }
+        else{
+            cerr << "El cuarto argumento solo admite 0 (direcciones) y 1 (puntos)" << endl;
+            exit(1);
+        } 
+    }
     double modulo () {
         if (this->valor == 1) {
             // es un punto
