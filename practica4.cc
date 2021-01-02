@@ -92,10 +92,15 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
             // Punto en coordenadas globales
             Punto_Vector punto_figura = r.origen + t_valor_min*dir_rayo;
 
+            bool plano = false;
+
             if (dynamic_cast<Esfera*>(escena[i_figura]) == nullptr)
             {
                 // no es una esfera -> es un PLANO
                 vector_y = escena[i_figura]->get_normal();
+                Punto_Vector aux = Punto_Vector(-vector_y.x,-vector_y.y,-vector_y.z,vector_y.valor);
+                vector_y = aux;
+                plano = true;
             }
             if (dynamic_cast<Plano*>(escena[i_figura]) == nullptr)
             {
@@ -104,6 +109,8 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
 
                 // Obtenemos la normal y creamos coordenadas locales en base a esa normal
                 vector_y = punto_figura - centro_figura; 
+                Punto_Vector aux = Punto_Vector(-vector_y.x,-vector_y.y,-vector_y.z,vector_y.valor);
+                vector_y = aux;
             }
 
            
@@ -150,10 +157,17 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
                 // el rayo sigue
                 std::tuple<int, int, int> siguiente = funcionL(escena,r);
 
+                if (plano){
+                    //cout << "color siguiente del plano " << get<0>(siguiente) << " " << get<1>(siguiente) << " " << get<2>(siguiente) << endl;
+                }
+
+
                 // pasamos los colores a [0, 1] para multiplicarlos
                 float red = (get<0>(siguiente) / 255.0) * (colores_figura.get_red() / 255.0);
                 float green = (get<1>(siguiente) / 255.0) * (colores_figura.get_green() / 255.0);
                 float blue = (get<2>(siguiente) / 255.0) * (colores_figura.get_blue() / 255.0);
+
+                
 
                 if(red > 1 || red < 0 || green > 1 || green < 0 || blue > 1 || blue < 0){
                     cout << "ERROR:"<< endl;
@@ -209,6 +223,14 @@ void rellenar_imagen_esfera(vector<float> &imagen, const int resolution,  Geomet
             get<0>(totalPixel) = get<0>(totalPixel) / number_of_rays;
             get<1>(totalPixel) = get<1>(totalPixel) / number_of_rays;
             get<2>(totalPixel) = get<2>(totalPixel) / number_of_rays;
+
+            /*for (int i = 0; i < number_of_rays; i++){
+                std::tuple<int, int, int> colorPixel = funcionL(escena,r);
+
+                get<0>(totalPixel) = (double(get<0>(totalPixel)) / 255.0 + double(get<0>(colorPixel)) / 255.0) * 255;
+                get<1>(totalPixel) = (double(get<1>(totalPixel)) / 255.0 + double(get<1>(colorPixel)) / 255.0) * 255;
+                get<2>(totalPixel) = (double(get<2>(totalPixel)) / 255.0 + double(get<2>(colorPixel)) / 255.0) * 255;
+            }*/
             
             //cout << "colores: " << get<0>(totalPixel) << " " << get<1>(totalPixel) << " " <<  get<2>(totalPixel) << endl;
 
@@ -234,7 +256,7 @@ int main(int argc, char **argv) {
     vector<float> imagen (resolution * resolution * 3);
 
     ofstream out;
-    out.open("practica_4.ppm");
+    out.open("practica4.ppm");
     out << "P3" << endl;
     out << resolution << " " << resolution << endl;
     out << 255 << endl;
@@ -254,10 +276,6 @@ int main(int argc, char **argv) {
     
     vector[1] = la_esfera_2;
 
-    Punto_Vector centro_esfera_3 = Punto_Vector(10,10,20,1);
-    double radio_esfera_3 = 6;
-    Geometria *la_esfera_3 = new Esfera(centro_esfera_3, radio_esfera_3, 0, 255, 0);
-
     vector[2] = new Plano(Punto_Vector(0,0.1,0,0),30,180,255,0 );
     vector[3] = new Plano(Punto_Vector(0,-0.1,0,0),30,0,255,255 );
 
@@ -267,7 +285,7 @@ int main(int argc, char **argv) {
     vector[6] = new Plano(Punto_Vector(0,0,-0.1,0),50,180,255,180 );
     vector[7] = new Plano(Punto_Vector(0,0,0.1,0),-50,180,255,180 );    
 
-    vector[8] = new Esfera(Punto_Vector(10,5,10,1), 5, 255, 0, 255);
+    vector[8] = new Esfera(Punto_Vector(10,5,20,1), 5, 255, 0, 255);
 
     Camera cam = Camera(Punto_Vector(0,0,0,1),
                         Punto_Vector(0,1,0,0),
