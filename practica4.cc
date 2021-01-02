@@ -98,9 +98,7 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
             {
                 // no es una esfera -> es un PLANO
                 vector_y = escena[i_figura]->get_normal();
-                Punto_Vector aux = Punto_Vector(-vector_y.x,-vector_y.y,-vector_y.z,vector_y.valor);
-                vector_y = aux;
-                plano = true;
+                vector_y = vector_y.normalizar();
             }
             if (dynamic_cast<Plano*>(escena[i_figura]) == nullptr)
             {
@@ -108,25 +106,42 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
                 Punto_Vector centro_figura = escena[i_figura]->get_centro();
 
                 // Obtenemos la normal y creamos coordenadas locales en base a esa normal
-                vector_y = punto_figura - centro_figura; 
-                Punto_Vector aux = Punto_Vector(-vector_y.x,-vector_y.y,-vector_y.z,vector_y.valor);
-                vector_y = aux;
+                vector_y = centro_figura - punto_figura; 
+                vector_y = vector_y.normalizar();
             }
 
            
 
-            double vectorIncl_1[4] = {cos(90),0,-sin(90),0};
-            double vectorIncl_2[4] = {0,1,0,0};
-            double vectorIncl_3[4] = {sin(90),0,cos(90),0};
-            double vectorIncl_4[4] = {0,0,0,1};
-            Matrix matrixIncl(vectorIncl_1,vectorIncl_2,vectorIncl_3,vectorIncl_4);
+            /*vector_y = vector_y.normalizar();
+            Punto_Vector vector_z;
+            Punto_Vector vector_x = operatorx(vector_y,Punto_Vector(0,0,1,0)); 
 
-            Punto_Vector vector_z = vector_y*matrixIncl;
+            if(vector_x.x == 0.0 && vector_x.y == 0.0 && vector_x.z == 0.0){
+                vector_z = operatorx(vector_y,Punto_Vector(1,0,0,0));
+                vector_z = vector_z.normalizar();
+                vector_x = operatorx(vector_z, vector_y);
+                vector_x = vector_x.normalizar();
+            }
+            else{
+                vector_x = vector_x.normalizar();
+                vector_z = operatorx(vector_x, vector_y);
+                vector_z = vector_z.normalizar();
+            }*/
+            Punto_Vector vector_z,vector_x;
+            if(vector_y.z < 0){
+                const float a = 1.0f / (1.0f - vector_y.z);
+                const float b = vector_y.x * vector_y.y * a;
+                vector_x = Punto_Vector(1.0f - vector_y.x * vector_y.x * a, -b, vector_y.x, 0);
+                vector_z = Punto_Vector(b, vector_y.y * vector_y.y * 1 - 1.0f, -vector_y.y, 0);
+            }
+            else{
+                const float a = 1.0f / (1.0f + vector_y.z);
+                const float b = -vector_y.x * vector_y.y * a;
+                vector_x = Punto_Vector(1.0f - vector_y.x * vector_y.x * a, b, -vector_y.x, 0);
+                vector_z = Punto_Vector(b, 1.0f - vector_y.y * vector_y.y * a, -vector_y.y, 0);
+            }
 
-            Punto_Vector vector_x = operatorx(vector_y,vector_z);
-
-
-            Matrix matrizLocal(vector_x,vector_y,vector_z,punto_figura);
+            Matrix matrizLocal = Matrix(vector_x,vector_y,vector_z,punto_figura);
 
             // PARA MATERIAL DIFUSO
             ////////////////////////
@@ -144,7 +159,7 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
             Punto_Vector direc_global = matrizLocal*direc_local;
 
             double valor_w_normal = abs(vector_y^direc_global);
-            r.origen = punto_figura;
+            r.origen = punto_figura + vector_y * 0.02;;
             r.direccion = direc_global;
             ////////////////////////////////////////
 
