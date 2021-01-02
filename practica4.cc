@@ -63,7 +63,7 @@ class Camera{
 
 };
 
-std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
+std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
     Punto_Vector origen_rayo = r.origen;
     Punto_Vector dir_rayo = r.direccion;
     rgb colores_figura;
@@ -71,7 +71,7 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
     int i_figura = 0;
     double t_valor_min = numeric_limits<double>::max();
 
-    for(int i = 0; i < 9 ; i++){
+    for(int i = 0; i < escena.size() ; i++){
         double t_valor = escena[i]->get_interseccion(origen_rayo,dir_rayo);
         if((t_valor < t_valor_min) && t_valor >= 0){
             t_valor_min = t_valor;
@@ -80,8 +80,8 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
         }
     }
     if(t_valor_min != numeric_limits<double>::max()){
-        if (i_figura == 4) {
-            // ha intersectado con la cuarta figura, que consideramos luz
+        if (i_figura == 2) {
+            // ha intersectado con la segunda figura, que consideramos luz
             //cout << "interseccion con luz" << endl;
             return std::make_tuple(255, 255, 255);
         }
@@ -206,7 +206,7 @@ std::tuple<int,int,int> funcionL(Geometria *escena[], Ray r){
 
 
 
-void rellenar_imagen_esfera(vector<float> &imagen, const int resolution,  Geometria *escena[], Camera cam, int thread, int number_of_rays){
+void rellenar_imagen_esfera(vector<float> &imagen, const int resolution,  vector<Geometria*> escena, Camera cam, int thread, int number_of_rays){
     int j1, j2;
     j1 = (thread - 1) * (resolution / 8);
     j2 = thread * (resolution / 8);
@@ -276,31 +276,19 @@ int main(int argc, char **argv) {
     out << resolution << " " << resolution << endl;
     out << 255 << endl;
     
+    std::vector<Geometria*> geo;
+    geo.push_back(new Plano(Punto_Vector(0,0.1,0,0),30,180,255,0 ));
+    geo.push_back(new Plano(Punto_Vector(0,-0.1,0,0),30,0,255,255 ));
 
-    Geometria *vector [9];
-    // definir una esfera justo delante de la cámara a distancia 3
-    Punto_Vector centro_esfera = Punto_Vector(0,0,15,1);
-    double radio_esfera = 5;
-    Geometria *la_esfera = new Esfera(centro_esfera, radio_esfera, 255, 0, 0);
-    
-    vector[0] = la_esfera;
+    geo.push_back(new Plano(Punto_Vector(0.1,0,0,0),30,180,255,0 ));
+    geo.push_back(new Plano(Punto_Vector(-0.1,0,0,0),30,0,255,180 ));
 
-    Punto_Vector centro_esfera_2 = Punto_Vector(0,5,20,1);
-    double radio_esfera_2 = 5;
-    Geometria *la_esfera_2 = new Esfera(centro_esfera_2, radio_esfera_2, 0, 255, 0);
-    
-    vector[1] = la_esfera_2;
+    geo.push_back(new Plano(Punto_Vector(0,0,-0.1,0),50,180,255,180 ));
+    geo.push_back(new Plano(Punto_Vector(0,0,0.1,0),-50,180,255,180 )); 
 
-    vector[2] = new Plano(Punto_Vector(0,0.1,0,0),30,180,255,0 );
-    vector[3] = new Plano(Punto_Vector(0,-0.1,0,0),30,0,255,255 );
-
-    vector[4] = new Plano(Punto_Vector(0.1,0,0,0),30,180,255,0 );
-    vector[5] = new Plano(Punto_Vector(-0.1,0,0,0),30,0,255,180 );
-
-    vector[6] = new Plano(Punto_Vector(0,0,-0.1,0),50,180,255,180 );
-    vector[7] = new Plano(Punto_Vector(0,0,0.1,0),-50,180,255,180 );    
-
-    vector[8] = new Esfera(Punto_Vector(10,5,20,1), 5, 255, 0, 255);
+    geo.push_back(new Esfera(Punto_Vector(0,0,20,1), 5, 255, 0, 0));
+    geo.push_back(new Esfera(Punto_Vector(0,5,20,1), 5, 0, 255, 0));
+    geo.push_back(new Esfera(Punto_Vector(10,5,20,1), 5, 255, 0, 255));
 
     Camera cam = Camera(Punto_Vector(0,0,0,1),
                         Punto_Vector(0,1,0,0),
@@ -312,7 +300,7 @@ int main(int argc, char **argv) {
     // generar threads
     std::thread threads[8];
     for (int t = 1; t <= 8; t++) {
-        threads[t-1] = std::thread(rellenar_imagen_esfera, std::ref(imagen), resolution, vector, cam, t, number_of_rays);
+        threads[t-1] = std::thread(rellenar_imagen_esfera, std::ref(imagen), resolution, geo, cam, t, number_of_rays);
     }
     for (int t = 1; t <= 8; t++) {
         threads[t-1].join();
