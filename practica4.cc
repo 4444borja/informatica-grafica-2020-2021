@@ -80,10 +80,10 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
         }
     }
     if(t_valor_min != numeric_limits<double>::max()){
-        if (i_figura == 2) {
+        if (i_figura == 2 ) {
             // ha intersectado con la segunda figura, que consideramos luz
             //cout << "interseccion con luz" << endl;
-            return std::make_tuple(255, 255, 255);
+            return std::make_tuple(700, 700, 700);
         }
         else {
             // NO HA INTERSECTADO CON LUZ, PERO SI CON OTRO OBJETO
@@ -184,14 +184,14 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
 
                 
 
-                if(red > 1 || red < 0 || green > 1 || green < 0 || blue > 1 || blue < 0){
+                /*if(red > 1 || red < 0 || green > 1 || green < 0 || blue > 1 || blue < 0){
                     cout << "ERROR:"<< endl;
                     cout << get<0>(siguiente) << endl;
                     cout << colores_figura.get_red() << endl;
                     cout << (get<0>(siguiente) / 255.0) << endl;
                     cout << (colores_figura.get_red() / 255.0) << endl;
                     cout << red << endl;
-                }
+                }*/
 
                 return std::make_tuple(red*255, green*255, blue*255);
             }
@@ -238,14 +238,6 @@ void rellenar_imagen_esfera(vector<float> &imagen, const int resolution,  vector
             get<0>(totalPixel) = get<0>(totalPixel) / number_of_rays;
             get<1>(totalPixel) = get<1>(totalPixel) / number_of_rays;
             get<2>(totalPixel) = get<2>(totalPixel) / number_of_rays;
-
-            /*for (int i = 0; i < number_of_rays; i++){
-                std::tuple<int, int, int> colorPixel = funcionL(escena,r);
-
-                get<0>(totalPixel) = (double(get<0>(totalPixel)) / 255.0 + double(get<0>(colorPixel)) / 255.0) * 255;
-                get<1>(totalPixel) = (double(get<1>(totalPixel)) / 255.0 + double(get<1>(colorPixel)) / 255.0) * 255;
-                get<2>(totalPixel) = (double(get<2>(totalPixel)) / 255.0 + double(get<2>(colorPixel)) / 255.0) * 255;
-            }*/
             
             //cout << "colores: " << get<0>(totalPixel) << " " << get<1>(totalPixel) << " " <<  get<2>(totalPixel) << endl;
 
@@ -277,18 +269,18 @@ int main(int argc, char **argv) {
     out << 255 << endl;
     
     std::vector<Geometria*> geo;
-    geo.push_back(new Plano(Punto_Vector(0,0.1,0,0),30,180,255,0 ));
-    geo.push_back(new Plano(Punto_Vector(0,-0.1,0,0),30,0,255,255 ));
+    geo.push_back(new Plano(Punto_Vector(0,0.1,0,0),30,240,120,110 ));
+    geo.push_back(new Plano(Punto_Vector(0,-0.1,0,0),30, 120,240,110 ));
 
-    geo.push_back(new Plano(Punto_Vector(0.1,0,0,0),30,180,255,0 ));
-    geo.push_back(new Plano(Punto_Vector(-0.1,0,0,0),30,0,255,180 ));
+    geo.push_back(new Plano(Punto_Vector(0.1,0,0,0),30,255,255,255 ));
+    geo.push_back(new Plano(Punto_Vector(-0.1,0,0,0),30,255,255,255 ));
 
-    geo.push_back(new Plano(Punto_Vector(0,0,-0.1,0),50,180,255,180 ));
-    geo.push_back(new Plano(Punto_Vector(0,0,0.1,0),-50,180,255,180 )); 
+    geo.push_back(new Plano(Punto_Vector(0,0,-0.1,0),50,255,255,255 ));
+    geo.push_back(new Plano(Punto_Vector(0,0,0.1,0),1,255,255,255 )); 
 
-    geo.push_back(new Esfera(Punto_Vector(0,0,20,1), 5, 255, 0, 0));
-    geo.push_back(new Esfera(Punto_Vector(0,5,20,1), 5, 0, 255, 0));
-    geo.push_back(new Esfera(Punto_Vector(10,5,20,1), 5, 255, 0, 255));
+    //geo.push_back(new Esfera(Punto_Vector(50,0,50 ,1), 10, 255, 255, 255));
+    //geo.push_back(new Esfera(Punto_Vector(0,5,20,1), 5, 0, 255, 0));
+    //geo.push_back(new Esfera(Punto_Vector(10,5,20,1), 5, 255, 0, 255));
 
     Camera cam = Camera(Punto_Vector(0,0,0,1),
                         Punto_Vector(0,1,0,0),
@@ -305,9 +297,23 @@ int main(int argc, char **argv) {
     for (int t = 1; t <= 8; t++) {
         threads[t-1].join();
     }
-    //rellenar_imagen_esfera(imagen,resolution,vector,cam,0,number_of_rays);
-
-    //rellenar_imagen_esfera(imagen,resolution,vector,cam,1,rebotes);
+    
+    // gamma
+    float gamma = 0.8;
+    for (int i = 0; i < resolution; i++) {
+        for (int j = 0; j < resolution; j++) {
+            for( int k = 0 ; k < 3 ; k++){
+                // eq
+                //imagen[i*resolution*3 + j*3 + k] = (imagen[i*resolution*3 + j*3 + k] ) / 255;
+                // gamma
+                imagen[i*resolution*3 + j*3 + k] = pow(imagen[i*resolution*3 + j*3 + k] / 255 , gamma) * 255;
+                //clamping
+                if (imagen[i*resolution*3 + j*3 + k] > 255) {
+                    imagen[i*resolution*3 + j*3 + k] = 255;
+                }
+            }
+        }
+    }
 
     // volcarlo al fichero
     for (int i = 0; i < resolution; i++) {

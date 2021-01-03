@@ -187,8 +187,8 @@ int main() {
     out << res_color << endl;
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            for (int k = 0 ; k < 3 ; k++){}
-                out << (int)(imagen[i*width*3 + j*3 + k] * res_color / MAX) << " " 
+            for (int k = 0 ; k < 3 ; k++){
+                out << (int)(imagen[i*width*3 + j*3 + k] * res_color / MAX) << " " ;
             }
         }
         out << endl;
