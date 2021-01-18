@@ -299,17 +299,19 @@ int main(int argc, char **argv) {
     }
     
     // gamma
-    float gamma = 0.5;
-    for (int i = 0; i < resolution; i++) {
-        for (int j = 0; j < resolution; j++) {
-            for( int k = 0 ; k < 3 ; k++){
-                // eq
-                //imagen[i*resolution*3 + j*3 + k] = (imagen[i*resolution*3 + j*3 + k] ) / 255;
-                // gamma
-                imagen[i*resolution*3 + j*3 + k] = pow(imagen[i*resolution*3 + j*3 + k] / 255 , gamma) * 255;
-                //clamping
-                if (imagen[i*resolution*3 + j*3 + k] > 255) {
-                    imagen[i*resolution*3 + j*3 + k] = 255;
+    float gamma = 1;
+    if (gamma != 1) {
+        for (int i = 0; i < resolution; i++) {
+            for (int j = 0; j < resolution; j++) {
+                for( int k = 0 ; k < 3 ; k++){
+                    // eq
+                    //imagen[i*resolution*3 + j*3 + k] = (imagen[i*resolution*3 + j*3 + k] ) / 255;
+                    // gamma
+                    imagen[i*resolution*3 + j*3 + k] = pow(imagen[i*resolution*3 + j*3 + k] / 255 , gamma) * 255;
+                    //clamping
+                    if (imagen[i*resolution*3 + j*3 + k] > 255) {
+                        imagen[i*resolution*3 + j*3 + k] = 255;
+                    }
                 }
             }
         }
