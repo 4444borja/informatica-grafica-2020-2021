@@ -6,22 +6,22 @@ using namespace std;
 
 class Plano : public Geometria {
    public:
-        Plano(Punto_Vector normal, double distancia, rgb Kd, rgb Ks, bool is_light) :
+        Plano(Punto_Vector punto, Punto_Vector v, Punto_Vector u, rgb Kd, rgb Ks, bool is_light) :
         Geometria(Kd, Ks, is_light)
         {
-            distancia_origen = distancia; 
-            normal_plano = normal.normalizar();
-            punto_plano = Punto_Vector(normal_plano.x,normal_plano.y, normal_plano.z,1);
-         }
+            vector_u = u.normalizar();
+            vector_v = v.normalizar();
+            punto_plano = punto;
+            normal_plano = operatorx(vector_u, vector_v); 
+            normal_plano = normal_plano.normalizar();
+        }
 
         Punto_Vector get_normal(){
             return normal_plano;
         }
-        double get_distancia(){
-            return distancia_origen;
-        }
 
-        float get_interseccion(Punto_Vector origen_rayo, Punto_Vector dir_rayo, Punto_Vector &normal) { 
+
+        float get_interseccion(Punto_Vector origen_rayo, Punto_Vector dir_rayo, Punto_Vector& normal) { 
             float interseccion;
             float denom = normal_plano ^ dir_rayo ;
             if (fabs(denom) < 1e-6 ){ // Es paralelo
@@ -36,6 +36,16 @@ class Plano : public Geometria {
             return interseccion;
         }
 
+        bool es_denom_neg(Punto_Vector dir_rayo){
+            float denom = normal_plano ^ dir_rayo;
+            if(denom < 0){
+                return true;
+            }
+            else{
+                return false;
+            }
+        }
+
         Punto_Vector get_centro(){
             cout << "SE HA INVOCADO LA FUNCIÓN get_centro EN UN OBJETO DE TIPO PLANO" << endl;
             exit(1);
@@ -43,6 +53,7 @@ class Plano : public Geometria {
 
     protected:
         Punto_Vector punto_plano;
-        double distancia_origen;
+        Punto_Vector vector_v;
+        Punto_Vector vector_u;
         Punto_Vector normal_plano;
 };
