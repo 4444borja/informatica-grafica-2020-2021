@@ -304,7 +304,7 @@ int main(int argc, char **argv) {
     }
     
     // gamma
-    float gamma = 1;
+    /*float gamma = 1;
     if (gamma != 1) {
         for (int i = 0; i < resolution; i++) {
             for (int j = 0; j < resolution; j++) {
@@ -320,7 +320,7 @@ int main(int argc, char **argv) {
                 }
             }
         }
-    }
+    }*/
 
     // volcarlo al fichero
     for (int i = 0; i < resolution; i++) {
