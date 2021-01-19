@@ -66,29 +66,27 @@ class Camera{
 std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
     Punto_Vector origen_rayo = r.origen;
     Punto_Vector dir_rayo = r.direccion;
-    rgb colores_figura;
     // Esfera
     int i_figura = 0;
     double t_valor_min = numeric_limits<double>::max();
-
+    Punto_Vector normal;
     for(int i = 0; i < escena.size() ; i++){
-        double t_valor = escena[i]->get_interseccion(origen_rayo,dir_rayo);
+        double t_valor = escena[i]->get_interseccion(origen_rayo,dir_rayo, normal);
         if((t_valor < t_valor_min) && t_valor >= 0){
             t_valor_min = t_valor;
-            colores_figura = escena[i]->get_colores();
             i_figura = i;
         }
     }
     if(t_valor_min != numeric_limits<double>::max()){
-        if (i_figura == 2 ) {
+        if (escena[i_figura]->es_luz() ) {
             // ha intersectado con la segunda figura, que consideramos luz
             //cout << "interseccion con luz" << endl;
-            return std::make_tuple(1000, 1000, 1000);
+            return std::make_tuple(255, 255, 255);
         }
         else {
             // NO HA INTERSECTADO CON LUZ, PERO SI CON OTRO OBJETO
 
-            Punto_Vector vector_y;
+            Punto_Vector normal;
             // Punto en coordenadas globales
             Punto_Vector punto_figura = r.origen + t_valor_min*dir_rayo;
 
@@ -97,8 +95,7 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
             if (dynamic_cast<Esfera*>(escena[i_figura]) == nullptr)
             {
                 // no es una esfera -> es un PLANO
-                vector_y = escena[i_figura]->get_normal();
-                vector_y = vector_y.normalizar();
+                normal = escena[i_figura]->get_normal();
             }
             if (dynamic_cast<Plano*>(escena[i_figura]) == nullptr)
             {
@@ -106,81 +103,74 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
                 Punto_Vector centro_figura = escena[i_figura]->get_centro();
 
                 // Obtenemos la normal y creamos coordenadas locales en base a esa normal
-                vector_y = centro_figura - punto_figura; 
-                vector_y = vector_y.normalizar();
+                normal = centro_figura - punto_figura; 
+                normal = normal.normalizar();
             }
 
-           
-
-            /*vector_y = vector_y.normalizar();
-            Punto_Vector vector_z;
-            Punto_Vector vector_x = operatorx(vector_y,Punto_Vector(0,0,1,0)); 
-
-            if(vector_x.x == 0.0 && vector_x.y == 0.0 && vector_x.z == 0.0){
-                vector_z = operatorx(vector_y,Punto_Vector(1,0,0,0));
-                vector_z = vector_z.normalizar();
-                vector_x = operatorx(vector_z, vector_y);
-                vector_x = vector_x.normalizar();
-            }
-            else{
-                vector_x = vector_x.normalizar();
-                vector_z = operatorx(vector_x, vector_y);
-                vector_z = vector_z.normalizar();
-            }*/
-            Punto_Vector vector_z,vector_x;
-            if(vector_y.z < 0){
-                const float a = 1.0f / (1.0f - vector_y.z);
-                const float b = vector_y.x * vector_y.y * a;
-                vector_x = Punto_Vector(1.0f - vector_y.x * vector_y.x * a, -b, vector_y.x, 0);
-                vector_z = Punto_Vector(b, vector_y.y * vector_y.y * 1 - 1.0f, -vector_y.y, 0);
-            }
-            else{
-                const float a = 1.0f / (1.0f + vector_y.z);
-                const float b = -vector_y.x * vector_y.y * a;
-                vector_x = Punto_Vector(1.0f - vector_y.x * vector_y.x * a, b, -vector_y.x, 0);
-                vector_z = Punto_Vector(b, 1.0f - vector_y.y * vector_y.y * a, -vector_y.y, 0);
-            }
-
-            Matrix matrizLocal = Matrix(vector_x,vector_y,vector_z,punto_figura);
-
-            // PARA MATERIAL DIFUSO
-            ////////////////////////
-            float random1 = (float) rand()/RAND_MAX;
-            float random2 = (float) rand()/RAND_MAX;
-
-            double zeta = acos(sqrt(1 - random2));
-            double fi = 2 * PI * random1;
-
-            Punto_Vector direc_local = Punto_Vector(sin(zeta) * cos(fi),
-                                                        sin(zeta) * sin(fi),
-                                                        cos(zeta),
-                                                        0);
-            // Transformamos de coordenadas locales a globales, con la inversa y con eso tenemos el punto y direccion
-            Punto_Vector direc_global = matrizLocal*direc_local;
-
-            double valor_w_normal = abs(vector_y^direc_global);
-            r.origen = punto_figura + vector_y * 0.02;;
-            r.direccion = direc_global;
-            ////////////////////////////////////////
-
-            // color de la esfera con la que se ha chocado
-            // rgb color = escena[i_figura]->get_colores();
-            //cout << "colores vvv: " << color.get_red() << " " << color.get_green() << " " <<  color.get_blue() << endl;
-
+        
+            
             // ruleta rusa para ver si seguimos
-            if( rand() % 10 < 8){
-                // el rayo sigue
-                std::tuple<int, int, int> siguiente = funcionL(escena,r);
+            double pd = escena[i_figura]->get_max_Kd();
+            double ps = escena[i_figura]->get_max_Ks();
+            if((pd+ps) > 0.9){
+                pd = 0.9 * pd / (pd + ps);
+                ps = 0.9 * pd/ (pd + ps);
+            }
+            
+            double num_aleatorio = (double)rand() / RAND_MAX;
 
-                if (plano){
-                    //cout << "color siguiente del plano " << get<0>(siguiente) << " " << get<1>(siguiente) << " " << get<2>(siguiente) << endl;
+            if( num_aleatorio < pd){
+                // Material difuso
+
+                Punto_Vector vector_z,vector_x;
+                if(normal.z < 0.0){
+                    const float a = 1.0f / (1.0f - normal.z);
+                    const float b = normal.x * normal.y * a;
+                    vector_x = Punto_Vector(1.0f - normal.x * normal.x * a, -b, normal.x, 0);
+                    vector_z = Punto_Vector(b, normal.y * normal.y * a - 1.0f, -normal.y, 0);
+                }
+                else{
+                    const float a = 1.0f / (1.0f + normal.z);
+                    const float b = -normal.x * normal.y * a;
+                    vector_x = Punto_Vector(1.0f - normal.x * normal.x * a, b, -normal.x, 0);
+                    vector_z = Punto_Vector(b, 1.0f - normal.y * normal.y * a, -normal.y, 0);
                 }
 
+                Matrix matrizLocal = Matrix(vector_x,normal,vector_z,punto_figura);
 
+                // PARA MATERIAL DIFUSO
+                ////////////////////////
+                float random1 = static_cast <float> (rand())/ static_cast <float> (RAND_MAX);
+                float random2 = static_cast <float> (rand())/ static_cast <float> (RAND_MAX);
+
+                double zeta = acos(sqrt(1 - random1));
+                double fi = 2 * PI * random2;
+
+                Punto_Vector direc_local = Punto_Vector(sin(zeta) * cos(fi),
+                                                            sin(zeta) * sin(fi),
+                                                            cos(zeta),
+                                                            0);
+                // Transformamos de coordenadas locales a globales, con la inversa y con eso tenemos el punto y direccion
+                Punto_Vector direc_global = matrizLocal*direc_local;
+
+                double valor_w_normal = abs(normal^direc_global);
+                r.origen = punto_figura + normal * 0.02;
+                r.direccion = direc_global;
+                ////////////////////////////////////////
+
+                // color de la esfera con la que se ha chocado
+                // rgb color = escena[i_figura]->get_colores();
+                //cout << "colores vvv: " << color.get_red() << " " << color.get_green() << " " <<  color.get_blue() << endl;
+
+
+                // el rayo sigue
+                std::tuple<int, int, int> siguiente = funcionL(escena,r);
                 // pasamos los colores a [0, 1] para multiplicarlos
-                float red = (get<0>(siguiente) / 255.0) * (colores_figura.get_red() / 255.0);
-                float green = (get<1>(siguiente) / 255.0) * (colores_figura.get_green() / 255.0);
-                float blue = (get<2>(siguiente) / 255.0) * (colores_figura.get_blue() / 255.0);
+                rgb colores_kd = escena[i_figura]->get_colores_kd();
+
+                float red = (get<0>(siguiente) / 255.0) * (colores_kd.get_red()) * abs(normal^direc_global) / pd;
+                float green = (get<1>(siguiente) / 255.0) * (colores_kd.get_green()) * abs(normal^direc_global) / pd;
+                float blue = (get<2>(siguiente) / 255.0) * (colores_kd.get_blue()) * abs(normal^direc_global) / pd;
 
                 
 
@@ -194,6 +184,9 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
                 }*/
 
                 return std::make_tuple(red*255, green*255, blue*255);
+            }
+            else if(num_aleatorio < ps){
+                // Si es material especular
             }
             else {
                 //ruleta rusa dice que paramos, devolvemos negro
@@ -269,18 +262,24 @@ int main(int argc, char **argv) {
     out << 255 << endl;
     
     std::vector<Geometria*> geo;
-    geo.push_back(new Plano(Punto_Vector(0,0.1,0,0),30,240,120,110 ));
-    geo.push_back(new Plano(Punto_Vector(0,-0.1,0,0),30, 120,240,110 ));
+    rgb verde, nada, rojo, blanco, azul;
+     verde.set_values(0/255,255/255,0/255);
+     nada.set_values(0,0,0);
+     rojo.set_values(255/255,0/255,0/255);
+     blanco.set_values(255/255,255/255,255/255);
+     azul.set_values(0/255,0/255,255/255);
+    geo.push_back(new Plano(Punto_Vector(0,-1,1,0),50,verde,nada,false ));
+    geo.push_back(new Plano(Punto_Vector(0,1,1,0),50,rojo,nada,false ));
 
-    geo.push_back(new Plano(Punto_Vector(0.1,0,0,0),30,255,255,255 ));
-    geo.push_back(new Plano(Punto_Vector(-0.1,0,0,0),30,255,255,255 ));
+    geo.push_back(new Plano(Punto_Vector(1,0,1,0),50,blanco,nada,false ));
+    geo.push_back(new Plano(Punto_Vector(-1,0,1,0),50,rojo,nada,true ));
 
-    geo.push_back(new Plano(Punto_Vector(0,0,-0.1,0),50,255,255,255 ));
-    geo.push_back(new Plano(Punto_Vector(0,0,0.1,0),1,255,255,255 )); 
+    geo.push_back(new Plano(Punto_Vector(0,0,2,0),100,blanco,nada,false ));
+    geo.push_back(new Plano(Punto_Vector(0,0,-1,0),100,blanco,nada,true ));
 
-    //geo.push_back(new Esfera(Punto_Vector(50,0,50 ,1), 10, 255, 255, 255));
-    //geo.push_back(new Esfera(Punto_Vector(0,5,20,1), 5, 0, 255, 0));
-    //geo.push_back(new Esfera(Punto_Vector(10,5,20,1), 5, 255, 0, 255));
+    geo.push_back(new Esfera(Punto_Vector(0.2,0,0.2 ,1), 20, verde,nada,false));
+    geo.push_back(new Esfera(Punto_Vector(0,2,10,1), 25, rojo,nada,false));
+    geo.push_back(new Esfera(Punto_Vector(5,5,10,1), 25, azul,nada,false));
 
     Camera cam = Camera(Punto_Vector(0,0,0,1),
                         Punto_Vector(0,1,0,0),

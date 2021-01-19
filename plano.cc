@@ -6,8 +6,13 @@ using namespace std;
 
 class Plano : public Geometria {
    public:
-        Plano(Punto_Vector normal, double distancia, int R, int G, int B):
-            Geometria(R, G, B), distancia_origen(distancia), normal_plano (normal) { }
+        Plano(Punto_Vector normal, double distancia, rgb Kd, rgb Ks, bool is_light) :
+        Geometria(Kd, Ks, is_light)
+        {
+            distancia_origen = distancia; 
+            normal_plano = normal.normalizar();
+            punto_plano = Punto_Vector(normal_plano.x,normal_plano.y, normal_plano.z,1);
+         }
 
         Punto_Vector get_normal(){
             return normal_plano;
@@ -16,14 +21,17 @@ class Plano : public Geometria {
             return distancia_origen;
         }
 
-        double get_interseccion(Punto_Vector origen_rayo, Punto_Vector dir_rayo) { 
-            double interseccion;
-            double paralelo = dir_rayo ^ normal_plano;
-            if (paralelo == 0){ // Es paralelo
+        float get_interseccion(Punto_Vector origen_rayo, Punto_Vector dir_rayo, Punto_Vector &normal) { 
+            float interseccion;
+            float denom = normal_plano ^ dir_rayo ;
+            if (fabs(denom) < 1e-6 ){ // Es paralelo
                 interseccion = -1;
             }
             else{
-                interseccion = -(distancia_origen+(origen_rayo^normal_plano))/paralelo;
+                Punto_Vector p_origen = punto_plano - origen_rayo;
+                interseccion = (p_origen ^ normal_plano) / denom;
+                if(denom < 0) normal = normal_plano;
+                else normal = Punto_Vector( -normal_plano.x, -normal_plano.y, -normal_plano.z, 0);
             }
             return interseccion;
         }
@@ -34,6 +42,7 @@ class Plano : public Geometria {
         }
 
     protected:
-        Punto_Vector normal_plano;
+        Punto_Vector punto_plano;
         double distancia_origen;
+        Punto_Vector normal_plano;
 };
