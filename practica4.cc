@@ -83,7 +83,7 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
         if (i_figura == 2 ) {
             // ha intersectado con la segunda figura, que consideramos luz
             //cout << "interseccion con luz" << endl;
-            return std::make_tuple(1000, 1000, 1000);
+            return std::make_tuple(255, 255, 255 );
         }
         else {
             // NO HA INTERSECTADO CON LUZ, PERO SI CON OTRO OBJETO
@@ -107,7 +107,7 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
 
                 // Obtenemos la normal y creamos coordenadas locales en base a esa normal
                 vector_y = centro_figura - punto_figura; 
-                vector_y = vector_y.normalizar();
+                //vector_y = vector_y.normalizar();
             }
 
            
@@ -132,7 +132,7 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
                 const float a = 1.0f / (1.0f - vector_y.z);
                 const float b = vector_y.x * vector_y.y * a;
                 vector_x = Punto_Vector(1.0f - vector_y.x * vector_y.x * a, -b, vector_y.x, 0);
-                vector_z = Punto_Vector(b, vector_y.y * vector_y.y * 1 - 1.0f, -vector_y.y, 0);
+                vector_z = Punto_Vector(b, vector_y.y * vector_y.y * a - 1.0f, -vector_y.y, 0);
             }
             else{
                 const float a = 1.0f / (1.0f + vector_y.z);
@@ -276,10 +276,10 @@ int main(int argc, char **argv) {
     geo.push_back(new Plano(Punto_Vector(-0.1,0,0,0),30,255,255,255 ));
 
     geo.push_back(new Plano(Punto_Vector(0,0,-0.1,0),50,255,255,255 ));
-    geo.push_back(new Plano(Punto_Vector(0,0,0.1,0),1,255,255,255 )); 
+    //geo.push_back(new Plano(Punto_Vector(0,0,0.1,0),1,255,255,255 )); 
 
     //geo.push_back(new Esfera(Punto_Vector(50,0,50 ,1), 10, 255, 255, 255));
-    //geo.push_back(new Esfera(Punto_Vector(0,5,20,1), 5, 0, 255, 0));
+    geo.push_back(new Esfera(Punto_Vector(0,0,20,1), 5, 100, 204, 100));
     //geo.push_back(new Esfera(Punto_Vector(10,5,20,1), 5, 255, 0, 255));
 
     Camera cam = Camera(Punto_Vector(0,0,0,1),
@@ -299,7 +299,7 @@ int main(int argc, char **argv) {
     }
     
     // gamma
-    float gamma = 1;
+    /*float gamma = 1;
     if (gamma != 1) {
         for (int i = 0; i < resolution; i++) {
             for (int j = 0; j < resolution; j++) {
@@ -315,7 +315,7 @@ int main(int argc, char **argv) {
                 }
             }
         }
-    }
+    }*/
 
     // volcarlo al fichero
     for (int i = 0; i < resolution; i++) {
