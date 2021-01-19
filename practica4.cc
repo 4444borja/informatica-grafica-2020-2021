@@ -81,7 +81,7 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
         if (escena[i_figura]->es_luz() ) {
             // ha intersectado con la segunda figura, que consideramos luz
             //cout << "interseccion con luz" << endl;
-            return std::make_tuple(255, 255, 255);
+            return std::make_tuple(1000, 1000, 1000);
         }
         else {
             // NO HA INTERSECTADO CON LUZ, PERO SI CON OTRO OBJETO
