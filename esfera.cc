@@ -45,7 +45,8 @@ class Esfera : public Geometria {
                 if(x0 < 0) return -1;
             }
             t = x0;
-            normal = (origen_rayo + dir_rayo*t) - centro_esfera;
+            normal = (origen_rayo + t*dir_rayo) - centro_esfera;
+            normal = normal.normalizar();
             return t;
         }
 
@@ -55,6 +56,10 @@ class Esfera : public Geometria {
             exit(1);
         }
 
+        bool es_denom_neg(Punto_Vector dir_rayo) {
+            cout << "SE HA INTENTADO LLAMAR A es_denom_neg EN UN OBJETO DE TIPO GEOMETRIA" << endl;
+            exit(1);
+        }
 
 
 

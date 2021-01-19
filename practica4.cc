@@ -95,7 +95,12 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
             if (dynamic_cast<Esfera*>(escena[i_figura]) == nullptr)
             {
                 // no es una esfera -> es un PLANO
+                bool denom_neg = escena[i_figura]->es_denom_neg(dir_rayo);
                 normal = escena[i_figura]->get_normal();
+                if(!denom_neg){
+                    normal = Punto_Vector(-normal.x,-normal.y,-normal.z,0);
+                }
+
             }
             if (dynamic_cast<Plano*>(escena[i_figura]) == nullptr)
             {
@@ -103,7 +108,7 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
                 Punto_Vector centro_figura = escena[i_figura]->get_centro();
 
                 // Obtenemos la normal y creamos coordenadas locales en base a esa normal
-                normal = centro_figura - punto_figura; 
+                normal = punto_figura - centro_figura; 
                 normal = normal.normalizar();
             }
 
@@ -116,7 +121,8 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
                 pd = 0.9 * pd / (pd + ps);
                 ps = 0.9 * pd/ (pd + ps);
             }
-            
+
+
             double num_aleatorio = (double)rand() / RAND_MAX;
 
             if( num_aleatorio < pd){
@@ -268,18 +274,18 @@ int main(int argc, char **argv) {
      rojo.set_values(255/255,0/255,0/255);
      blanco.set_values(255/255,255/255,255/255);
      azul.set_values(0/255,0/255,255/255);
-    geo.push_back(new Plano(Punto_Vector(0,-1,1,0),50,verde,nada,false ));
-    geo.push_back(new Plano(Punto_Vector(0,1,1,0),50,rojo,nada,false ));
+    geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),blanco,nada,true ));
+    geo.push_back(new Plano(Punto_Vector(50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),blanco,nada,false ));
 
-    geo.push_back(new Plano(Punto_Vector(1,0,1,0),50,blanco,nada,false ));
-    geo.push_back(new Plano(Punto_Vector(-1,0,1,0),50,rojo,nada,true ));
+    geo.push_back(new Plano(Punto_Vector(0,50,50,1),Punto_Vector(0,0,1,0),Punto_Vector(1,0,0,0),verde,nada,false ));
+    geo.push_back(new Plano(Punto_Vector(0,-50,50,1),Punto_Vector(0,0,1,0),Punto_Vector(1,0,0,0),rojo,nada,false ));
 
-    geo.push_back(new Plano(Punto_Vector(0,0,2,0),100,blanco,nada,false ));
-    geo.push_back(new Plano(Punto_Vector(0,0,-1,0),100,blanco,nada,true ));
+    geo.push_back(new Plano(Punto_Vector(0,0,100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),blanco,nada,false ));
+    geo.push_back(new Plano(Punto_Vector(0,0,-100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),blanco,nada,false ));
 
-    geo.push_back(new Esfera(Punto_Vector(0.2,0,0.2 ,1), 20, verde,nada,false));
-    geo.push_back(new Esfera(Punto_Vector(0,2,10,1), 25, rojo,nada,false));
-    geo.push_back(new Esfera(Punto_Vector(5,5,10,1), 25, azul,nada,false));
+    geo.push_back(new Esfera(Punto_Vector(50,0,50,1), 10, verde,nada,false));
+    geo.push_back(new Esfera(Punto_Vector(0,10,20,1), 5, rojo,nada,false));
+    geo.push_back(new Esfera(Punto_Vector(10,5,20,1), 5, azul,nada,false));
 
     Camera cam = Camera(Punto_Vector(0,0,0,1),
                         Punto_Vector(0,1,0,0),

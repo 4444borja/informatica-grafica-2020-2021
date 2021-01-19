@@ -20,6 +20,11 @@ class Geometria {
             exit(1);
         }
 
+        virtual bool es_denom_neg(Punto_Vector dir_rayo) {
+            cout << "SE HA INTENTADO LLAMAR A es_denom_neg EN UN OBJETO DE TIPO GEOMETRIA" << endl;
+            exit(1);
+        }
+
         virtual float get_interseccion(Punto_Vector origen_rayo, Punto_Vector dir_rayo, Punto_Vector &normal) { 
             return 0;
         }
