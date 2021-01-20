@@ -6,8 +6,8 @@ using namespace std;
 
 class Esfera : public Geometria {
    public:
-        Esfera(Punto_Vector centro, double radio, rgb Kd, rgb Ks, bool is_light) :
-            Geometria(Kd, Ks, is_light), centro_esfera(centro), radio_esfera (radio) { }
+        Esfera(Punto_Vector centro, double radio, rgb Kd, rgb Ks, rgb Kt, bool is_light) :
+            Geometria(Kd, Ks, Kt, is_light), centro_esfera(centro), radio_esfera (radio) { }
         
         int get_radio(){
             return radio_esfera;

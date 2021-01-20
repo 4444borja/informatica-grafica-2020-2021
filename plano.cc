@@ -6,8 +6,8 @@ using namespace std;
 
 class Plano : public Geometria {
    public:
-        Plano(Punto_Vector punto, Punto_Vector v, Punto_Vector u, rgb Kd, rgb Ks, bool is_light) :
-        Geometria(Kd, Ks, is_light)
+        Plano(Punto_Vector punto, Punto_Vector v, Punto_Vector u, rgb Kd, rgb Ks, rgb Kt, bool is_light) :
+        Geometria(Kd, Ks, Kt, is_light)
         {
             vector_u = u.normalizar();
             vector_v = v.normalizar();

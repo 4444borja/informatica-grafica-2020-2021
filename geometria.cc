@@ -5,9 +5,10 @@ using namespace std;
 
 class Geometria {
     public:
-        Geometria(rgb Kd, rgb Ks, bool light){
+        Geometria(rgb Kd, rgb Ks, rgb Kt, bool light){
             kd.set_values(Kd.get_red(), Kd.get_green(), Kd.get_blue());
             ks.set_values(Ks.get_red(), Ks.get_green(), Ks.get_blue());
+            kt.set_values(Kt.get_red(), Kt.get_green(), Kt.get_blue());
             is_light = light;
         }
 
@@ -33,6 +34,10 @@ class Geometria {
         } 
         rgb get_colores_ks(){
             return ks;
+        }
+
+        rgb get_colores_kt(){
+            return kt;
         }
 
         bool es_luz(){
@@ -61,9 +66,22 @@ class Geometria {
                 return ks.get_blue();
             }
         }
+
+        double get_max_Kt(){
+            if(kt.get_red() > kt.get_blue() && kt.get_red() > kt.get_green()){
+                return kt.get_red();
+            }
+            else if(kt.get_green() > kt.get_red() && kt.get_green() > kt.get_blue()){
+                return kt.get_green();
+            }
+            else{
+                return kt.get_blue();
+            }
+        }
     protected:
         rgb kd;
         rgb ks;
+        rgb kt;
         bool is_light;
 
 };
