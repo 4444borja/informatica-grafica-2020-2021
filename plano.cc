@@ -14,6 +14,7 @@ class Plano : public Geometria {
             punto_plano = punto;
             normal_plano = operatorx(vector_u, vector_v); 
             normal_plano = normal_plano.normalizar();
+
         }
 
         Punto_Vector get_normal(){
