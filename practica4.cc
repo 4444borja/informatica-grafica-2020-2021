@@ -86,11 +86,9 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
         else {
             // NO HA INTERSECTADO CON LUZ, PERO SI CON OTRO OBJETO
 
-            Punto_Vector normal;
+            //Punto_Vector normal;
             // Punto en coordenadas globales
             Punto_Vector punto_figura = r.origen + t_valor_min*dir_rayo;
-
-            bool plano = false;
 
             if (dynamic_cast<Esfera*>(escena[i_figura]) == nullptr)
             {
@@ -100,7 +98,8 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
                 if(!denom_neg){
                     normal = Punto_Vector(-normal.x,-normal.y,-normal.z,0);
                 }
-
+                normal = normal.normalizar();
+                //normal.modificar(-normal.x,-normal.y,-normal.z,normal.valor);
             }
             if (dynamic_cast<Plano*>(escena[i_figura]) == nullptr)
             {
@@ -119,13 +118,25 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
             double ps = escena[i_figura]->get_max_Ks();
             if((pd+ps) > 0.9){
                 pd = 0.9 * pd / (pd + ps);
-                ps = 0.9 * pd/ (pd + ps);
+                ps = 0.9 * ps/ (pd + ps);
             }
 
 
             double num_aleatorio = (double)rand() / RAND_MAX;
 
-            if( num_aleatorio < pd){
+             if(num_aleatorio < ps){
+                // Si es material especular
+                dir_rayo.normalizar();
+                Punto_Vector dir_rayo_inv = Punto_Vector(-dir_rayo.x,-dir_rayo.y,-dir_rayo.z,dir_rayo.valor);
+                Punto_Vector direccion_reflejada = (2 * (normal ^ dir_rayo_inv) * normal + dir_rayo);
+
+                r.origen = punto_figura;
+                r.direccion = direccion_reflejada.normalizar();
+
+                std::tuple<int, int, int> siguiente = funcionL(escena,r);
+                return siguiente;
+            }
+            else if( num_aleatorio < pd){
                 // Material difuso
 
                 Punto_Vector vector_z,vector_x;
@@ -191,9 +202,6 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
 
                 return std::make_tuple(red*255, green*255, blue*255);
             }
-            else if(num_aleatorio < ps){
-                // Si es material especular
-            }
             else {
                 //ruleta rusa dice que paramos, devolvemos negro
                 return std::make_tuple(0, 0, 0);
@@ -257,7 +265,7 @@ int main(int argc, char **argv) {
 
     int number_of_rays = atoi(argv[1]);
 
-    const int resolution = 1000;
+    const int resolution = 500;
 
     vector<float> imagen (resolution * resolution * 3);
 
@@ -268,24 +276,26 @@ int main(int argc, char **argv) {
     out << 255 << endl;
     
     std::vector<Geometria*> geo;
-    rgb verde, nada, rojo, blanco, azul;
+    rgb verde, nada, rojo, blanco, azul, rosa, amarillo;
      verde.set_values(50/255.0, 200/255.0, 50/255.0);
      nada.set_values(0,0,0);
      rojo.set_values(200/255.0, 50/255.0, 50/255.0);
      blanco.set_values(255/255.0, 255/255.0, 255/255.0);
-     azul.set_values(0/255,0/255,255/255);
+     azul.set_values(0/255,0/255,220/255.0);
+     rosa.set_values(255/255.0, 10/255.0, 127/255.0);
+     amarillo.set_values(250/255.0, 240/255.0, 10/255.0);
     geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),blanco,nada,true ));
     geo.push_back(new Plano(Punto_Vector(50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),blanco,nada,false ));
 
     geo.push_back(new Plano(Punto_Vector(0,50,50,1),Punto_Vector(0,0,1,0),Punto_Vector(1,0,0,0),verde,nada,false ));
-    geo.push_back(new Plano(Punto_Vector(0,-50,50,1),Punto_Vector(0,0,1,0),Punto_Vector(1,0,0,0),rojo,nada,false ));
+    geo.push_back(new Plano(Punto_Vector(0,-50,50,1),Punto_Vector(0,0,-1,0),Punto_Vector(1,0,0,0),rojo,nada,false ));
 
     geo.push_back(new Plano(Punto_Vector(0,0,100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),blanco,nada,false ));
-    geo.push_back(new Plano(Punto_Vector(0,0,-100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),blanco,nada,false ));
+    geo.push_back(new Plano(Punto_Vector(0,0,-100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),rosa,nada,false ));
 
-    geo.push_back(new Esfera(Punto_Vector(20,0,50,1), 10, blanco,nada,false));
-    geo.push_back(new Esfera(Punto_Vector(0,10,20,1), 5, rojo,nada,false));
-    geo.push_back(new Esfera(Punto_Vector(0,0,20,1), 5, azul,nada,false));
+    geo.push_back(new Esfera(Punto_Vector(10,0,15,1), 3 , azul,nada,false));
+    geo.push_back(new Esfera(Punto_Vector(5,10,16,1), 3, amarillo,nada,false));
+    geo.push_back(new Esfera(Punto_Vector(0,0,20,1), 5, azul,blanco,false));
 
     Camera cam = Camera(Punto_Vector(0,0,0,1),
                         Punto_Vector(0,1,0,0),
