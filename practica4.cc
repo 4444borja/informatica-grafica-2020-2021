@@ -81,7 +81,7 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
         if (escena[i_figura]->es_luz() ) {
             // ha intersectado con la segunda figura, que consideramos luz
             //cout << "interseccion con luz" << endl;
-            return std::make_tuple(1000, 1000, 1000);
+            return std::make_tuple(2000, 2000, 2000);
         }
         else {
             // NO HA INTERSECTADO CON LUZ, PERO SI CON OTRO OBJETO
@@ -257,7 +257,7 @@ int main(int argc, char **argv) {
 
     int number_of_rays = atoi(argv[1]);
 
-    const int resolution = 500;
+    const int resolution = 1000;
 
     vector<float> imagen (resolution * resolution * 3);
 
@@ -269,10 +269,10 @@ int main(int argc, char **argv) {
     
     std::vector<Geometria*> geo;
     rgb verde, nada, rojo, blanco, azul;
-     verde.set_values(0/255,255/255,0/255);
+     verde.set_values(50/255.0, 200/255.0, 50/255.0);
      nada.set_values(0,0,0);
-     rojo.set_values(255/255,0/255,0/255);
-     blanco.set_values(255/255,255/255,255/255);
+     rojo.set_values(200/255.0, 50/255.0, 50/255.0);
+     blanco.set_values(255/255.0, 255/255.0, 255/255.0);
      azul.set_values(0/255,0/255,255/255);
     geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),blanco,nada,true ));
     geo.push_back(new Plano(Punto_Vector(50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),blanco,nada,false ));
@@ -283,9 +283,9 @@ int main(int argc, char **argv) {
     geo.push_back(new Plano(Punto_Vector(0,0,100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),blanco,nada,false ));
     geo.push_back(new Plano(Punto_Vector(0,0,-100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),blanco,nada,false ));
 
-    geo.push_back(new Esfera(Punto_Vector(50,0,50,1), 10, verde,nada,false));
+    geo.push_back(new Esfera(Punto_Vector(20,0,50,1), 10, blanco,nada,false));
     geo.push_back(new Esfera(Punto_Vector(0,10,20,1), 5, rojo,nada,false));
-    geo.push_back(new Esfera(Punto_Vector(10,5,20,1), 5, azul,nada,false));
+    geo.push_back(new Esfera(Punto_Vector(0,0,20,1), 5, azul,nada,false));
 
     Camera cam = Camera(Punto_Vector(0,0,0,1),
                         Punto_Vector(0,1,0,0),
@@ -302,9 +302,9 @@ int main(int argc, char **argv) {
     for (int t = 1; t <= 8; t++) {
         threads[t-1].join();
     }
-    
+    //rellenar_imagen_esfera(imagen,resolution,geo,cam,1,number_of_rays);
     // gamma
-    /*float gamma = 1;
+    float gamma = 0.5;
     if (gamma != 1) {
         for (int i = 0; i < resolution; i++) {
             for (int j = 0; j < resolution; j++) {
@@ -320,7 +320,7 @@ int main(int argc, char **argv) {
                 }
             }
         }
-    }*/
+    }
 
     // volcarlo al fichero
     for (int i = 0; i < resolution; i++) {
