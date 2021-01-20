@@ -130,11 +130,18 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
                 Punto_Vector dir_rayo_inv = Punto_Vector(-dir_rayo.x,-dir_rayo.y,-dir_rayo.z,dir_rayo.valor);
                 Punto_Vector direccion_reflejada = (2 * (normal ^ dir_rayo_inv) * normal + dir_rayo);
 
-                r.origen = punto_figura;
+                r.origen = punto_figura + normal * 0.02;
                 r.direccion = direccion_reflejada.normalizar();
 
                 std::tuple<int, int, int> siguiente = funcionL(escena,r);
-                return siguiente;
+
+                rgb colores_ks = escena[i_figura]->get_colores_ks();
+
+                float red = (get<0>(siguiente) / 255.0) * (colores_ks.get_red()) * abs(normal^r.direccion) / ps;
+                float green = (get<1>(siguiente) / 255.0) * (colores_ks.get_green()) * abs(normal^r.direccion) / ps;
+                float blue = (get<2>(siguiente) / 255.0) * (colores_ks.get_blue()) * abs(normal^r.direccion) / ps;
+
+                return std::make_tuple(red*255, green*255, blue*255);
             }
             else if( num_aleatorio < pd){
                 // Material difuso
@@ -185,9 +192,9 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
                 // pasamos los colores a [0, 1] para multiplicarlos
                 rgb colores_kd = escena[i_figura]->get_colores_kd();
 
-                float red = (get<0>(siguiente) / 255.0) * (colores_kd.get_red()) * abs(normal^direc_global) / pd;
-                float green = (get<1>(siguiente) / 255.0) * (colores_kd.get_green()) * abs(normal^direc_global) / pd;
-                float blue = (get<2>(siguiente) / 255.0) * (colores_kd.get_blue()) * abs(normal^direc_global) / pd;
+                float red = (get<0>(siguiente) / 255.0) * (colores_kd.get_red()) * abs(normal^r.direccion) / pd;
+                float green = (get<1>(siguiente) / 255.0) * (colores_kd.get_green()) * abs(normal^r.direccion) / pd;
+                float blue = (get<2>(siguiente) / 255.0) * (colores_kd.get_blue()) * abs(normal^r.direccion) / pd;
 
                 
 
@@ -284,8 +291,8 @@ int main(int argc, char **argv) {
      azul.set_values(0/255,0/255,220/255.0);
      rosa.set_values(255/255.0, 10/255.0, 127/255.0);
      amarillo.set_values(250/255.0, 240/255.0, 10/255.0);
-    geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),blanco,nada,true ));
-    geo.push_back(new Plano(Punto_Vector(50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),blanco,nada,false ));
+    geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),nada,blanco,true ));
+    geo.push_back(new Plano(Punto_Vector(50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),nada,blanco,false ));
 
     geo.push_back(new Plano(Punto_Vector(0,50,50,1),Punto_Vector(0,0,1,0),Punto_Vector(1,0,0,0),verde,nada,false ));
     geo.push_back(new Plano(Punto_Vector(0,-50,50,1),Punto_Vector(0,0,-1,0),Punto_Vector(1,0,0,0),rojo,nada,false ));
