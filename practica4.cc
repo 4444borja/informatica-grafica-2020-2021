@@ -111,15 +111,52 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
                 normal = normal.normalizar();
             }
 
+            //next event estimation
+            //comprobar 
+
+            /*Punto_Vector punto_luz = Punto_Vector(-20,0,20,1);
+            double distancia_a_luz = sqrt( pow(origen_rayo.x - punto_luz.x,2) +
+                                           pow(origen_rayo.y - punto_luz.y,2) +
+                                           pow(origen_rayo.z - punto_luz.z,2) );
+            bool luz_nee = false;
+            
+
+            double t_valor_min_nee = numeric_limits<double>::max();
+            Punto_Vector normal_nee;
+            Punto_Vector dir_rayo_nee = punto_luz - origen_rayo;
+
+            for(int i = 0; i < escena.size() ; i++){
+                double distancia_a_objeto = escena[i]->get_interseccion(origen_rayo,dir_rayo_nee, normal_nee);
+
+                if((distancia_a_objeto < t_valor_min_nee) && distancia_a_objeto >= 0){
+                    // se ha intersecado con algo
+                    if(distancia_a_objeto > distancia_a_luz) {
+                        //ha intersectado con un objeto que está más allá del punto de luz, por lo que no hay sombra
+                        luz_nee = true;
+                    }
+                    else{
+                        //la distancia al objeto es menor que a la luz, hay que comprobar si el objeto está entre el punto y la luz, o detrás del punto
+                        double distancia_luz_objeto = escena[i]->get_interseccion(punto_luz, dir_rayo_nee, normal_nee);
+                        if(distancia_luz_objeto > distancia_a_luz) {
+                            // si la distancia entre la luz y el objeto es mayor a la distancia entre la uz y el punto, el objeto no tapa la luz -> no hace sombra
+                            luz_nee = true;
+                        }
+                    }
+                }
+            }   */
+
         
             
             // ruleta rusa para ver si seguimos
-            double pd = escena[i_figura]->get_max_Kd();
-            double ps = escena[i_figura]->get_max_Ks();
-            if((pd+ps) > 0.95){
-                pd = 0.95 * pd / (pd + ps);
-                ps = 0.95 * ps / (pd + ps);
-            }/*
+            double maxpd = escena[i_figura]->get_max_Kd();
+            double maxps = escena[i_figura]->get_max_Ks();
+            double maxpt = escena[i_figura]->get_max_Kt();
+            //if((pd+ps) > 0.95){
+            double pd = 0.95 * maxpd / (maxpd + maxps + maxpt);
+            double ps = 0.95 * maxps / (maxpd + maxps + maxpt);
+            double pt = 0.95 * maxpt / (maxpd + maxps + maxpt);
+            //}
+            /*
             pd = pd / (pd + ps);
             ps = 1 - pd;
 
@@ -147,6 +184,33 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
                 float red = (get<0>(siguiente) / 255.0) * (colores_ks.get_red()) * abs(normal^r.direccion) / ps;
                 float green = (get<1>(siguiente) / 255.0) * (colores_ks.get_green()) * abs(normal^r.direccion) / ps;
                 float blue = (get<2>(siguiente) / 255.0) * (colores_ks.get_blue()) * abs(normal^r.direccion) / ps;
+
+                return std::make_tuple(red*255, green*255, blue*255);
+            }
+            else if(num_aleatorio < pt){
+                // Si es material refractado
+
+                const double n = 1 / 1.4;
+                const double cosI = abs(normal ^ dir_rayo);
+                const double sinT2 = n * n * (1.0 - cosI * cosI);
+                if(sinT2 > 1.0){
+                    cout << "error en rayo refractado" << endl;
+                    exit(1);
+                }
+                const double cosT = sqrt(1.0 - sinT2);
+                Punto_Vector direccion_refractada =  n * dir_rayo + (n * cosI - cosT) * normal;
+
+
+                r.origen = punto_figura + direccion_refractada * escena[i_figura]->disancia_de_refraccion();
+                r.direccion = direccion_refractada.normalizar();
+
+                std::tuple<int, int, int> siguiente = funcionL(escena,r);
+
+                rgb colores_kt = escena[i_figura]->get_colores_kt();
+
+                float red = (get<0>(siguiente) / 255.0) * (colores_kt.get_red()) * abs(normal^r.direccion) / pt;
+                float green = (get<1>(siguiente) / 255.0) * (colores_kt.get_green()) * abs(normal^r.direccion) / pt;
+                float blue = (get<2>(siguiente) / 255.0) * (colores_kt.get_blue()) * abs(normal^r.direccion) / pt;
 
                 return std::make_tuple(red*255, green*255, blue*255);
             }
@@ -298,7 +362,7 @@ int main(int argc, char **argv) {
      azul.set_values(0/255,0/255,220/255.0);
      rosa.set_values(255/255.0, 10/255.0, 127/255.0);
      amarillo.set_values(250/255.0, 240/255.0, 10/255.0);
-     gris.set_values(0.02, 0.02, 0.02);
+     gris.set_values(0.2, 0.2, 0.2);
     geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),nada,blanco,nada,true ));
     geo.push_back(new Plano(Punto_Vector(50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),nada,blanco,nada,false ));
 
@@ -309,8 +373,9 @@ int main(int argc, char **argv) {
     geo.push_back(new Plano(Punto_Vector(0,0,-100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),rosa,nada,nada,false ));
 
     geo.push_back(new Esfera(Punto_Vector(10,0,15,1), 3 , azul,nada,nada,false));
-    geo.push_back(new Esfera(Punto_Vector(5,10,16,1), 3, amarillo,blanco,nada,false));
-    geo.push_back(new Esfera(Punto_Vector(0,0,20,1), 5, azul,amarillo,nada,false));
+    //geo.push_back(new Esfera(Punto_Vector(5,10,16,1), 3, amarillo,blanco,nada,false));
+    geo.push_back(new Esfera(Punto_Vector(5,10,16,1), 3, nada,blanco,blanco,false));
+    geo.push_back(new Esfera(Punto_Vector(0,0,20,1), 5, nada,nada,blanco,false));
 
     Camera cam = Camera(Punto_Vector(0,0,0,1),
                         Punto_Vector(0,1,0,0),

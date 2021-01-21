@@ -52,6 +52,10 @@ class Plano : public Geometria {
             exit(1);
         }
 
+        double disancia_de_refraccion(){
+            return 0.02;
+        }
+
     protected:
         Punto_Vector punto_plano;
         Punto_Vector vector_v;

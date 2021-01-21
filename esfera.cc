@@ -61,6 +61,10 @@ class Esfera : public Geometria {
             exit(1);
         }
 
+        double disancia_de_refraccion(){
+            return radio_esfera;
+        }
+
 
 
     protected:

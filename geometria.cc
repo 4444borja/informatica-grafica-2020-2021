@@ -29,6 +29,11 @@ class Geometria {
         virtual float get_interseccion(Punto_Vector origen_rayo, Punto_Vector dir_rayo, Punto_Vector &normal) { 
             return 0;
         }
+
+        virtual double disancia_de_refraccion(){
+            return 0;
+        }
+
         rgb get_colores_kd(){
             return kd;
         } 
