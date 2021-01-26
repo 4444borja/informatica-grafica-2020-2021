@@ -135,7 +135,7 @@ Punto_Vector operator*(const Matrix &m1, const Punto_Vector &v1){
 Punto_Vector operator*(const Punto_Vector &v1,const Matrix &m1){
     float lista_res[4];
     for(int i = 0 ;i < 4 ; i++){
-        lista_res[i] = m1.la_matriz[i][0] * v1.x + m1.la_matriz[i][1] * v1.y + m1.la_matriz[i][2] * v1.z + m1.la_matriz[i][3] * v1.valor;
+        lista_res[i] = m1.la_matriz[0][i] * v1.x + m1.la_matriz[1][i] * v1.y + m1.la_matriz[2][i] * v1.z + m1.la_matriz[3][i] * v1.valor;
     }
     Punto_Vector res(lista_res[0],lista_res[1],lista_res[2],lista_res[3]);
     return res;

@@ -6,8 +6,8 @@ using namespace std;
 
 class Plano : public Geometria {
    public:
-        Plano(Punto_Vector punto, Punto_Vector v, Punto_Vector u, rgb Kd, rgb Ks, rgb Kt, bool is_light) :
-        Geometria(Kd, Ks, Kt, is_light)
+        Plano(Punto_Vector punto, Punto_Vector v, Punto_Vector u, rgb Kd, rgb Ks, rgb Kt, double i_ref, bool dielectric, bool is_light, int p_light) :
+        Geometria(Kd, Ks, Kt, is_light, p_light, i_ref, dielectric)
         {
             vector_u = u.normalizar();
             vector_v = v.normalizar();
@@ -52,7 +52,7 @@ class Plano : public Geometria {
             exit(1);
         }
 
-        double disancia_de_refraccion(){
+        double distancia_de_refraccion(){
             return 0.02;
         }
 
