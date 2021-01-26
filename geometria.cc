@@ -5,11 +5,14 @@ using namespace std;
 
 class Geometria {
     public:
-        Geometria(rgb Kd, rgb Ks, rgb Kt, bool light){
+        Geometria(rgb Kd, rgb Ks, rgb Kt, bool light, int p_light, double i_ref, bool dielectric){
             kd.set_values(Kd.get_red(), Kd.get_green(), Kd.get_blue());
             ks.set_values(Ks.get_red(), Ks.get_green(), Ks.get_blue());
             kt.set_values(Kt.get_red(), Kt.get_green(), Kt.get_blue());
+            ind_ref = i_ref;
             is_light = light;
+            power_light = p_light;
+            is_dielectric = dielectric;
         }
 
         virtual Punto_Vector get_centro(){
@@ -30,10 +33,10 @@ class Geometria {
             return 0;
         }
 
-        virtual double disancia_de_refraccion(){
+        virtual double distancia_de_refraccion(){
             return 0;
         }
-
+        
         rgb get_colores_kd(){
             return kd;
         } 
@@ -44,9 +47,20 @@ class Geometria {
         rgb get_colores_kt(){
             return kt;
         }
-
+        double get_refraccion(){
+            return ind_ref;
+        }
+        
         bool es_luz(){
             return is_light;
+        }
+
+        int get_p_light(){
+            return power_light;
+        }
+
+        bool es_dielectrico(){
+            return is_dielectric;
         }
         double get_max_Kd(){
             if(kd.get_red() > kd.get_blue() && kd.get_red() > kd.get_green()){
@@ -88,5 +102,7 @@ class Geometria {
         rgb ks;
         rgb kt;
         bool is_light;
-
+        int power_light;
+        double ind_ref;
+        bool is_dielectric;
 };
