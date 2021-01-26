@@ -126,6 +126,9 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r){
             Punto_Vector dir_rayo_nee = punto_luz - origen_rayo;
 
             for(int i = 0; i < escena.size() ; i++){
+                if (i_figura == i) {
+                    continue;
+                }
                 double distancia_a_objeto = escena[i]->get_interseccion(origen_rayo,dir_rayo_nee, normal_nee);
 
                 if((distancia_a_objeto < t_valor_min_nee) && distancia_a_objeto >= 0){
