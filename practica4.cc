@@ -222,9 +222,9 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                 float red,green,blue;
                 if(luces.size() > 0){
                     rgb iluminacion_luces = luces[luz_random] -> get_luz();
-                    red = (iluminacion_luces.get_red() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<0>(siguiente) / 255.0) * PI *(colores_ks.get_red()) / (normal^r.direccion) * abs(normal^r.direccion) / ps;
-                    green = (iluminacion_luces.get_green() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<1>(siguiente) / 255.0) * PI * (colores_ks.get_green()) / (normal^r.direccion) * abs(normal^r.direccion) / ps;
-                    blue = (iluminacion_luces.get_blue() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<2>(siguiente) / 255.0) * PI * (colores_ks.get_blue()) / (normal^r.direccion) * abs(normal^r.direccion) / ps;
+                    red = (iluminacion_luces.get_red() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<0>(siguiente) / 255.0) * PI *(colores_ks.get_red()) / (normal^r.direccion) * abs(normal^r.direccion) / ps;
+                    green = (iluminacion_luces.get_green() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<1>(siguiente) / 255.0) * PI * (colores_ks.get_green()) / (normal^r.direccion) * abs(normal^r.direccion) / ps;
+                    blue = (iluminacion_luces.get_blue() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<2>(siguiente) / 255.0) * PI * (colores_ks.get_blue()) / (normal^r.direccion) * abs(normal^r.direccion) / ps;
                 }
                 else{
                     red = (get<0>(siguiente) / 255.0) * PI *(colores_ks.get_red()) / (normal^r.direccion) * abs(normal^r.direccion) / ps;
@@ -273,9 +273,9 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                 float red,green,blue;
                 if(luces.size() > 0){
                     rgb iluminacion_luces = luces[luz_random] -> get_luz();
-                    red = (iluminacion_luces.get_red() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<0>(siguiente) / 255.0) * PI * (colores_kt.get_red()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
-                    green = (iluminacion_luces.get_green() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<1>(siguiente) / 255.0) * PI * (colores_kt.get_green()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
-                    blue = (iluminacion_luces.get_blue() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<2>(siguiente) / 255.0) * PI * (colores_kt.get_blue()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
+                    red = (iluminacion_luces.get_red() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<0>(siguiente) / 255.0) * PI * (colores_kt.get_red()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
+                    green = (iluminacion_luces.get_green() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<1>(siguiente) / 255.0) * PI * (colores_kt.get_green()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
+                    blue = (iluminacion_luces.get_blue() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<2>(siguiente) / 255.0) * PI * (colores_kt.get_blue()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
                 }
                 else{
                     red = (get<0>(siguiente) / 255.0) * PI * (colores_kt.get_red()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
@@ -335,8 +335,8 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                 if(luces.size() > 0){
                     rgb iluminacion_luces = luces[luz_random] -> get_luz();
                     red = (iluminacion_luces.get_red() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<0>(siguiente) / 255.0) * (colores_kd.get_red()) * valor_w_normal / pd;
-                    green = (iluminacion_luces.get_green() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<1>(siguiente) / 255.0) * (colores_kd.get_green()) * valor_w_normal / pd;
-                    blue = (iluminacion_luces.get_blue() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<2>(siguiente) / 255.0) * (colores_kd.get_blue()) * valor_w_normal / pd;
+                    green = (iluminacion_luces.get_green() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<1>(siguiente) / 255.0) * (colores_kd.get_green()) * valor_w_normal / pd;
+                    blue = (iluminacion_luces.get_blue() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<2>(siguiente) / 255.0) * (colores_kd.get_blue()) * valor_w_normal / pd;
                 }
                 else{
                     red = (get<0>(siguiente) / 255.0) * (colores_kd.get_red()) * valor_w_normal / pd;
@@ -432,7 +432,7 @@ int main(int argc, char **argv) {
     rosa.set_values(255/255.0, 10/255.0, 127/255.0);
     amarillo.set_values(250/255.0, 240/255.0, 10/255.0);
     gris.set_values(0.2, 0.2, 0.2);
-    int tipo_escena = 0;
+    int tipo_escena = 1;
     if(tipo_escena == 0){
         // Escena sin next event estimation
         geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),blanco,nada,nada,0, false,true,4 ));
