@@ -4,10 +4,10 @@
 #include <iostream>
 using namespace std;
 
-class Plano : public Geometria {
+class Plano_Limit: public Plano {
    public:
-        Plano(Punto_Vector punto, Punto_Vector v, Punto_Vector u, rgb Kd, rgb Ks, rgb Kt, double i_ref, bool dielectric, bool is_light, int p_light) :
-        Geometria(Kd, Ks, Kt, is_light, p_light, i_ref, dielectric)
+        Plano_Limit(Punto_Vector punto, Punto_Vector v, Punto_Vector u, rgb Kd, rgb Ks, rgb Kt, double i_ref, bool dielectric, bool is_light, int p_light) :
+        Plano(Punto_Vector punto, Punto_Vector v, Punto_Vector u, rgb Kd, rgb Ks, rgb Kt, double i_ref, bool dielectric, bool is_light, int p_light)
         {
             vector_u = u.normalizar();
             vector_v = v.normalizar();
@@ -22,13 +22,15 @@ class Plano : public Geometria {
         }
 
 
-        bool get_interseccion(Punto_Vector origen_rayo, Punto_Vector dir_rayo, float &distancia, float &t_value) { 
-            float denom = normal_plano ^ dir_rayo ;
-            if (fabs(denom) > 0.000001f ){ // No es paralelo
-                Punto_Vector p_origen = punto_plano - origen_rayo;
-                t_value = (p_origen ^ normal_plano) / denom;
-                distancia = t_value*dir_rayo.modulo();
-                return (t_value >= 0);
+        bool get_interseccion_limit(Punto_Vector origen_rayo, Punto_Vector dir_rayo, float &distancia, float &t_value) { 
+            if(Plane::get_interseccion(origen_rayo, dir_rayo, distancia,t_value)){
+
+                Punto_vector punto_inter = origen_rayo + dir_rayo*t_value;
+                Punto_Vector vector_aux_1 = inter - p;
+
+                double cos_vec_1 = vector_v ^ vector_aux_1 / (vector_v_mod * vector_aux_1.modulo())
+                double cos_vec_2 = vector_u ^ vector_aux_2 / (vector_u_mod * vector_aux_2.modulo())
+                return true;
             }
             return false;
         }

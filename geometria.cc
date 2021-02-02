@@ -29,7 +29,7 @@ class Geometria {
             exit(1);
         }
 
-        virtual float get_interseccion(Punto_Vector origen_rayo, Punto_Vector dir_rayo, Punto_Vector &normal) { 
+        virtual bool get_interseccion(Punto_Vector origen_rayo, Punto_Vector dir_rayo, float &distancia, float &t_value) { 
             return 0;
         }
 

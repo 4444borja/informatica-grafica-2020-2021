@@ -68,19 +68,23 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, double n0, do
     Punto_Vector dir_rayo = r.direccion;
     // Esfera
     int i_figura = 0;
-    double t_valor_min = numeric_limits<double>::max();
+    float distancia_min = numeric_limits<float>::max();
+    float t_valor_min;
     Punto_Vector normal;
     for(int i = 0; i < escena.size() ; i++){
-        double t_valor = escena[i]->get_interseccion(origen_rayo,dir_rayo, normal);
-        if((t_valor < t_valor_min) && t_valor >= 0){
-            t_valor_min = t_valor;
-            i_figura = i;
+        float t_valor, distancia;
+        bool choca = escena[i]->get_interseccion(origen_rayo,dir_rayo, distancia, t_valor);
+        if(choca){
+            if(distancia < distancia_min){
+                distancia_min = distancia;
+                i_figura = i;
+                t_valor_min = t_valor;
+            }
         }
     }
-    if(t_valor_min != numeric_limits<double>::max()){
+    if(t_valor_min != numeric_limits<float>::max()){
         if (escena[i_figura]->es_luz() ) {
-            // ha intersectado con la segunda figura, que consideramos luz
-            //cout << "interseccion con luz" << endl;
+            // ha intersectado con una figura que es luz, entonces devolvemos la luz
             rgb light = escena[i_figura]->get_colores_kd();
             return std::make_tuple(255 *light.get_red()*escena[i_figura]->get_p_light(), 
                                    255 * light.get_green()*escena[i_figura]->get_p_light(), 
@@ -89,9 +93,8 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, double n0, do
         else {
             // NO HA INTERSECTADO CON LUZ, PERO SI CON OTRO OBJETO
 
-            //Punto_Vector normal;
             // Punto en coordenadas globales
-            Punto_Vector punto_figura = r.origen + t_valor_min*dir_rayo;
+            Punto_Vector punto_figura = origen_rayo + t_valor_min*dir_rayo;
 
             if (dynamic_cast<Esfera*>(escena[i_figura]) == nullptr)
             {
@@ -116,8 +119,8 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, double n0, do
 
             //next event estimation
 
-            Punto_Vector punto_luz = Punto_Vector(-20,0,20,1);
-            double distancia_a_luz = sqrt( pow(punto_figura.x - punto_luz.x,2) +
+            Punto_Vector punto_luz = Punto_Vector(20,0,20,1);
+            float distancia_a_luz = sqrt( pow(punto_figura.x - punto_luz.x,2) +
                                            pow(punto_figura.y - punto_luz.y,2) +
                                            pow(punto_figura.z - punto_luz.z,2) );
             
@@ -126,29 +129,8 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, double n0, do
             Punto_Vector dir_rayo_nee = punto_luz - punto_figura;
             dir_rayo_nee = dir_rayo_nee.normalizar();
 
-            punto_figura = punto_figura + normal * 0.02;
+    
 
-            //cout << dir_rayo_nee.x << " " << dir_rayo_nee.y << " " << dir_rayo_nee.z << " " << endl;
-
-            for(int i = 0; i < escena.size() ; i++){
-                /*if (i_figura == i){
-                    continue;
-                }*/
-                double distancia_a_objeto = escena[i]->get_interseccion(punto_figura,dir_rayo_nee, normal_nee);
-
-                if((distancia_a_objeto < distancia_a_luz) && distancia_a_objeto >= 0){
-                    // se hace sombra
-                    return std::make_tuple(0, 0, 0);
-                    //goto Sombra;
-                }
-            }
-            //cout << "luz" << endl;
-            return std::make_tuple(255, 255, 255);
-
-
-            Sombra:
-
-                
 
             double maxpd, maxps, maxpt, pd, ps,pt;
             if(escena[i_figura]->es_dielectrico()){
@@ -187,7 +169,7 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, double n0, do
 
             double num_aleatorio = (double)rand() / RAND_MAX;
 
-             if(num_aleatorio < ps){
+            if(num_aleatorio < ps){
                 // Si es material especular
                 dir_rayo = dir_rayo.normalizar();
                 Punto_Vector dir_rayo_inv = Punto_Vector(-dir_rayo.x,-dir_rayo.y,-dir_rayo.z,dir_rayo.valor);
@@ -207,20 +189,37 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, double n0, do
                 return std::make_tuple(red*255, green*255, blue*255);
             }
             else if(num_aleatorio < pt){
-                // Si es material refractado
+                // Si es material refractado realizamos las ecuaciones para sacar la direccion refractada
                 double n1 = escena[i_figura]->get_refraccion();
-                Punto_Vector cambio = Punto_Vector(-normal.x,-normal.y,-normal.z,0);
-                if(i_figura == figura_actual){
-                    n1 = 1;
-                    cambio = Punto_Vector(normal.x,normal.y,normal.z,0);
-                }
-                double n = n0 / n1;
-                double c1 = -(normal ^ dir_rayo);
+                double n = 1 / n1;
+                double c1 = abs(normal ^ dir_rayo);
                 Punto_Vector aux = normal * c1 * 2;
                 Punto_Vector r1 = dir_rayo + aux;
                 double c2= sqrt(1 - n * n  * (1 - c1 * c1));
                 Punto_Vector direccion_refractada = (n * dir_rayo) + (n * (c1 - c2)) * normal;
-                r.origen = punto_figura + cambio * 0.02;
+                
+                // Calculamos el punto dentro de la esfera y la direccion refractada
+                Punto_Vector cambio = Punto_Vector(-normal.x,-normal.y,-normal.z,0); // Negamos la normal para que sea hacia adentro
+                Punto_Vector punto_refract = punto_figura + cambio * 0.02;
+                direccion_refractada = direccion_refractada.normalizar();
+                // Sacamos el valor de t del nuevo punto y el nuevo punto
+                float new_t_value,distancia;
+                bool refracta = escena[i_figura]->get_interseccion(punto_refract,direccion_refractada, distancia, new_t_value);
+                punto_refract = punto_refract + new_t_value*direccion_refractada;
+
+                Punto_Vector centro_figura = escena[i_figura]->get_centro();
+                normal = punto_refract - centro_figura; 
+                normal = normal.normalizar();
+
+                // Calculamos las ecuaciones de refraccion otra vez, para sacar la direccion de salida
+                n = n1 / 1;
+                c1 = abs(normal ^ dir_rayo);
+                aux = normal * c1 * 2;
+                r1 = dir_rayo + aux;
+                c2= sqrt(1 - n * n  * (1 - c1 * c1));
+                direccion_refractada = (n * dir_rayo) + (n * (c1 - c2)) * normal;
+
+                r.origen = punto_refract + normal * 0.002;
                 r.direccion = direccion_refractada.normalizar();
 
                 std::tuple<int, int, int> siguiente = funcionL(escena,r,n1,i_figura,false);
@@ -234,8 +233,26 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, double n0, do
                 return std::make_tuple(red*255, green*255, blue*255);
             }
             else if( num_aleatorio < pd){
-                // Material difuso
+                // NEXT EVENT STIMATION
+                punto_figura = punto_figura + normal * 0.02;
+                for(int i = 0; i < escena.size() ; i++){
+                    if (i_figura == i){
+                        continue;
+                    }
+                    float distancia_a_objeto, valor_t;
+                    bool choca = escena[i]->get_interseccion(punto_figura,dir_rayo_nee, distancia_a_objeto,valor_t);
+                    if(choca){
+                        if((distancia_a_objeto < distancia_a_luz)){
 
+                            //cout << "Entro sombra" << endl;
+                            // se hace sombra
+                            return std::make_tuple(0, 0, 0);
+                            //goto Sombra;
+                        }
+                    }
+                }   
+
+                // Material difuso
                 Punto_Vector vector_z,vector_x;
                if(normal.z < 0.){
                     const float a = 1.0f / (1.0f - normal.z);
@@ -249,9 +266,7 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, double n0, do
                     vector_x = Punto_Vector(1.0f - normal.x * normal.x * a, b, -normal.x, 0);
                     vector_z = Punto_Vector(b, 1.0f - normal.y * normal.y * a, -normal.y, 0);
                 }
-                vector_x = vector_x.normalizar();
-                vector_z = vector_z.normalizar();
-
+                
 
                 Matrix matrizLocal = Matrix(vector_x,normal,vector_z,punto_figura);
                 // PARA MATERIAL DIFUSO
@@ -263,22 +278,18 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, double n0, do
                 float fi = 2 * PI * random2;
 
                 Punto_Vector direc_local = Punto_Vector(sin(zeta) * cos(fi),
-                                                            sin(zeta) * sin(fi),
                                                             cos(zeta),
+                                                            sin(zeta) * sin(fi),
                                                             0);
                 // Transformamos de coordenadas locales a globales, con la inversa y con eso tenemos el punto y direccion
                 Punto_Vector direc_global = matrizLocal*direc_local;
 
                 float valor_w_normal = abs(normal^direc_global);
-                r.origen = punto_figura + normal * 0.002;
+                r.origen = punto_figura;
                 r.direccion = direc_global.normalizar();
                 ////////////////////////////////////////
-
-                // color de la esfera con la que se ha chocado
-                // rgb color = escena[i_figura]->get_colores();
-                //cout << "colores vvv: " << color.get_red() << " " << color.get_green() << " " <<  color.get_blue() << endl;
-
-
+                
+                int figura_actual = i_figura;
                 // el rayo sigue
                 std::tuple<int, int, int> siguiente = funcionL(escena,r,n0,i_figura,false);
                 // pasamos los colores a [0, 1] para multiplicarlos
@@ -328,6 +339,7 @@ void rellenar_imagen_esfera(vector<float> &imagen, const int resolution,  vector
             // para cada pixel
             
             Ray r = cam.get_center_ray(i,j,resolution);
+            r.direccion = r.direccion.normalizar();
             double radiancia_total = 0;
 
             std::tuple<int, int, int> totalPixel = std::make_tuple(0, 0, 0);
@@ -384,7 +396,7 @@ int main(int argc, char **argv) {
      rosa.set_values(255/255.0, 10/255.0, 127/255.0);
      amarillo.set_values(250/255.0, 240/255.0, 10/255.0);
      gris.set_values(0.2, 0.2, 0.2);
-    geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),blanco,nada,nada,0, false,true,13 ));
+    geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),blanco,nada,nada,0, false,true,4 ));
     geo.push_back(new Plano(Punto_Vector(50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),blanco,nada,nada,0, false,false,0 ));
 
     geo.push_back(new Plano(Punto_Vector(0,50,50,1),Punto_Vector(0,0,1,0),Punto_Vector(1,0,0,0),verde,nada,nada,0, false,false,0 ));
@@ -398,8 +410,8 @@ int main(int argc, char **argv) {
     //geo.push_back(new Esfera(Punto_Vector(10,0,15,1), 3 , azul,nada,nada,0, false,false,0));
     //geo.push_back(new Esfera(Punto_Vector(5,10,16,1), 3, amarillo,blanco,nada,false,0));
     geo.push_back(new Esfera(Punto_Vector(-5,-10,16,1), 3, nada,blanco,nada,0, false,false,0));
-    geo.push_back(new Esfera(Punto_Vector(5,10,16,1), 3, nada,nada,blanco,1.45, false,false,0));
-    //geo.push_back(new Esfera(Punto_Vector(0,0,20,1), 5, nada,blanco,blanco,1.45, true,false,0));
+    geo.push_back(new Esfera(Punto_Vector(5,10,16,1), 3, nada,nada,blanco,1.35, false,false,0));
+    //geo.push_back(new Esfera(Punto_Vector(0,-3,10,1), 5, nada,blanco,blanco,1.45, true,false,0));
 
     Camera cam = Camera(Punto_Vector(0,0,0,1),
                         Punto_Vector(0,1,0,0),

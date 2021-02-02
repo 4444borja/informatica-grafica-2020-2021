@@ -32,22 +32,20 @@ class Esfera : public Geometria {
             return true; 
         }
 
-        float get_interseccion(Punto_Vector origen_rayo, Punto_Vector dir_rayo, Punto_Vector &normal) { 
-            float t;
+        bool get_interseccion(Punto_Vector origen_rayo, Punto_Vector dir_rayo, float &distancia, float &t_value) { 
             float a = pow(dir_rayo.modulo(), 2);
             float b = 2 * (dir_rayo ^ (origen_rayo - centro_esfera));
             float c = pow((origen_rayo - centro_esfera).modulo(), 2) - pow(radio_esfera, 2);
             float x0,x1;
-            if(!solveQuadratic(a,b,c,x0,x1)) return -1;
+            if(!solveQuadratic(a,b,c,x0,x1)) return false;
             if(x0 > x1) swap(x0,x1);
             if(x0 < 0){
                 x0 = x1;
-                if(x0 < 0) return -1;
+                if(x0 < 0) return false;
             }
-            t = x0;
-            normal = (origen_rayo + t*dir_rayo) - centro_esfera;
-            normal = normal.normalizar();
-            return t;
+            t_value = x0;
+            distancia = t_value*dir_rayo.modulo();
+            return true;
         }
 
 
