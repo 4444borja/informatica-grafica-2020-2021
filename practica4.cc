@@ -432,7 +432,7 @@ int main(int argc, char **argv) {
     rosa.set_values(255/255.0, 10/255.0, 127/255.0);
     amarillo.set_values(250/255.0, 240/255.0, 10/255.0);
     gris.set_values(0.2, 0.2, 0.2);
-    int tipo_escena = 1;
+    int tipo_escena = 0;
     if(tipo_escena == 0){
         // Escena sin next event estimation
         geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),blanco,nada,nada,0, false,true,4 ));
