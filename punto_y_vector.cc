@@ -79,6 +79,13 @@ struct Punto_Vector
         }
         cout << this->x << ", " << this->y << ", " << this->z << endl;
     }
+
+    bool equal(const Punto_Vector comparacion){
+        if(this->x == comparacion.x && this->y == comparacion.y && this->z == comparacion.z && this->valor == comparacion.valor){
+            return true;
+        }
+        return false;
+    }
 };
 
 Punto_Vector operator+(const Punto_Vector &p1, const Punto_Vector &p2)

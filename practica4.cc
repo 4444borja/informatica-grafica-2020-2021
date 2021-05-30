@@ -70,6 +70,65 @@ class Camera{
 
 };
 
+std::tuple<double,double,double> fr(Geometria* figura, Punto_Vector wi, Punto_Vector wo, Ray r, Punto_Vector normal, Punto_Vector punto_figura){
+
+    // Calculamos direccion reflejada
+    Punto_Vector dir_rayo_inv = Punto_Vector(-wi.x,-wi.y,-wi.z,wi.valor);
+    Punto_Vector direccion_reflejada = (2 * (normal ^ dir_rayo_inv) * normal + wi);
+    
+    // Calculamos direccion refractada
+    double n1 = figura->get_refraccion();
+    double n = 1 / n1;
+    double c1 = abs(normal ^ wi);
+    Punto_Vector aux = normal * c1 * 2;
+    Punto_Vector r1 = wi + aux;
+    double c2= sqrt(1 - n * n  * (1 - c1 * c1));
+    Punto_Vector direccion_refractada = (n * wi) + (n * (c1 - c2)) * normal;
+    
+    // Calculamos el punto dentro de la esfera y la direccion refractada
+    Punto_Vector cambio = Punto_Vector(-normal.x,-normal.y,-normal.z,0); // Negamos la normal para que sea hacia adentro
+    Punto_Vector punto_refract = punto_figura + cambio * 0.02;
+    direccion_refractada = direccion_refractada.normalizar();
+    // Sacamos el valor de t del nuevo punto y el nuevo punto
+    float new_t_value,distancia;
+    //bool refracta = escena[i_figura]->get_interseccion(punto_refract,direccion_refractada, distancia, new_t_value);
+    punto_refract = punto_refract + new_t_value*direccion_refractada;
+
+    Punto_Vector normal_n;
+    if (dynamic_cast<Plano*>(figura) == nullptr){
+        Punto_Vector centro_figura = figura->get_centro();
+    
+        normal_n = punto_refract - centro_figura; 
+        normal_n = normal.normalizar();
+        // Calculamos las ecuaciones de refraccion otra vez, para sacar la direccion de salida
+        n = n1 / 1;
+        c1 = abs(normal_n ^ wi);
+        aux = normal_n * c1 * 2;
+        r1 = wi + aux;
+        c2= sqrt(1 - n * n  * (1 - c1 * c1));
+        direccion_refractada = (n * wi) + (n * (c1 - c2)) * normal_n;
+    }
+    else{
+        direccion_refractada = Punto_Vector(0,0,0,0);
+    }
+    int constante_wr = 0;
+    int constante_wt = 0;
+    if(wo.equal(direccion_reflejada)){
+        constante_wr = 1;
+    }
+
+    if(wo.equal(direccion_refractada)){
+        constante_wt = 1;
+    }
+    // Calculamos la BSDF del material
+    double valor_red = 0;
+    double valor_green = 0;
+    double valor_blue = 0;
+    valor_red = figura->get_colores_kd().get_red() / PI + (figura->get_colores_ks().get_red() * constante_wr) / (normal^r.direccion) + (figura->get_colores_kt().get_red() * constante_wt / (normal^r.direccion));
+    valor_green = figura->get_colores_kd().get_green() / PI + (figura->get_colores_ks().get_green() * constante_wr) / (normal^r.direccion) + (figura->get_colores_kt().get_green() * constante_wt / (normal^r.direccion));
+    valor_blue = figura->get_colores_kd().get_blue() / PI + (figura->get_colores_ks().get_blue() * constante_wr) / (normal^r.direccion) + (figura->get_colores_kt().get_blue() * constante_wt / (normal^r.direccion));
+    return std::make_tuple(valor_red, valor_green, valor_blue);
+}
 // Ray tracing
 // Devuelve una tupla RGB
 std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_Luz*> luces){
@@ -146,31 +205,18 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
             Punto_Vector normal_nee;
             Punto_Vector dir_rayo_nee;
             int luz_random;
+            double valor_luz = 0;
             if(luces.size() > 0){
-                Punto_Vector punto_figura_luz = punto_figura + normal * 0.02;
-                // Calculamos un punto aleatorio de todos los definidos en el vector de luces puntuales
-                luz_random = rand() % luces.size();
-                // Calculamos la direccion y distancia hacia el rayo de luz
-                punto_luz = luces[luz_random]->get_punto();
-                distancia_a_luz = sqrt( pow(punto_figura_luz.x - punto_luz.x,2) +
+                for(int i = 0; i < luces.size(); i++){
+                    punto_luz = luces[i]->get_punto();
+                    distancia_a_luz = sqrt( pow(punto_figura_luz.x - punto_luz.x,2) +
                                            pow(punto_figura_luz.y - punto_luz.y,2) +
-                                           pow(punto_figura_luz.z - punto_luz.z,2) );
-                dir_rayo_nee = punto_luz - punto_figura_luz;
-                dir_rayo_nee = dir_rayo_nee.normalizar();                
-                for(int i = 0; i < escena.size() ; i++){
-                    float distancia_a_objeto, valor_t;
-                    // Comprobamos si el rayo de luz tiene un objeto entre medio
-                    bool choca = escena[i]->get_interseccion(punto_figura_luz,dir_rayo_nee, distancia_a_objeto,valor_t);
-                    if(choca){
-                        if((distancia_a_objeto < distancia_a_luz)){
-                            // se hace sombra
-                            return std::make_tuple(0, 0, 0);
-
-                        }
-                    }
-                } 
+                                           pow(punto_figura_luz.z - punto_luz.z,2));
+                    valor_luz = luces[i]->get_power / (distancia_a_luz*distancia_a_luz);
+                }
             }
 
+            // Calculamos el valor del material
             double maxpd, maxps, maxpt, pd, ps,pt;
             if(escena[i_figura]->es_dielectrico()){ // Material dielectrico
                 // Calculamos las ecuaciones de fresnel
@@ -188,8 +234,8 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                 double Ot = acos((normal^direccion_refractada)/(direccion_refractada.modulo() * normal.modulo()));
                 float p_par = (n1*cos(Oi)-1*cos(Ot))/(n1*cos(Oi)+1*cos(Ot));
                 float p_perp = (1*cos(Oi)-n1*cos(Ot))/(1*cos(Oi)+n1*cos(Ot));
-                ps = 1/2*(p_par*p_par + p_perp * p_perp);
-                pt = 1 - maxps;
+                ps = (p_par*p_par + p_perp * p_perp)/2;
+                pt = 1 - ps;
                 pd = 0;
 
             }
@@ -212,24 +258,38 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                 dir_rayo = dir_rayo.normalizar();
                 Punto_Vector dir_rayo_inv = Punto_Vector(-dir_rayo.x,-dir_rayo.y,-dir_rayo.z,dir_rayo.valor);
                 Punto_Vector direccion_reflejada = (2 * (normal ^ dir_rayo_inv) * normal + dir_rayo);
-
+                std::tuple<double, double, double> bsdf_material = fr(escena[i_figura],dir_rayo,direccion_reflejada,r,normal,punto_figura);
                 r.origen = punto_figura + normal * 0.002;
                 r.direccion = direccion_reflejada.normalizar();
 
                 std::tuple<int, int, int> siguiente = funcionL(escena,r,luces);
 
                 rgb colores_ks = escena[i_figura]->get_colores_ks();
+                rgb colores_kd = escena[i_figura]->get_colores_kd();
                 float red,green,blue;
-                if(luces.size() > 0){
-                    rgb iluminacion_luces = luces[luz_random] -> get_luz();
-                    red = (iluminacion_luces.get_red() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<0>(siguiente) / 255.0) * PI *(colores_ks.get_red()) / (normal^r.direccion) * abs(normal^r.direccion) / ps;
-                    green = (iluminacion_luces.get_green() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<1>(siguiente) / 255.0) * PI * (colores_ks.get_green()) / (normal^r.direccion) * abs(normal^r.direccion) / ps;
-                    blue = (iluminacion_luces.get_blue() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<2>(siguiente) / 255.0) * PI * (colores_ks.get_blue()) / (normal^r.direccion) * abs(normal^r.direccion) / ps;
+                if(luces.size() > 0){ // Next event estimation
+                    if(escena[i_figura]->es_dielectrico()){
+                        red = valor_luz * (get<0>(siguiente) / 255.0) * PI * ps / (normal^r.direccion) * abs(normal^r.direccion) / ps;
+                        green = valor_luz * (get<1>(siguiente) / 255.0) * PI * ps / (normal^r.direccion) * abs(normal^r.direccion) / ps;
+                        blue = valor_luz * (get<2>(siguiente) / 255.0) * PI * ps / (normal^r.direccion) * abs(normal^r.direccion) / ps;
+                    }
+                    else{
+                        red = valor_luz * (get<0>(siguiente) / 255.0) * PI * get<0>(bsdf_material) * abs(normal^r.direccion) / ps;
+                        green = valor_luz * (get<1>(siguiente) / 255.0) * PI * get<1>(bsdf_material) * abs(normal^r.direccion) / ps;
+                        blue = valor_luz * (get<2>(siguiente) / 255.0) * PI * get<2>(bsdf_material)  * abs(normal^r.direccion) / ps;
+                    }
                 }
                 else{
-                    red = (get<0>(siguiente) / 255.0) * PI *(colores_ks.get_red()) / (normal^r.direccion) * abs(normal^r.direccion) / ps;
-                    green = (get<1>(siguiente) / 255.0) * PI * (colores_ks.get_green()) / (normal^r.direccion) * abs(normal^r.direccion) / ps;
-                    blue = (get<2>(siguiente) / 255.0) * PI * (colores_ks.get_blue()) / (normal^r.direccion) * abs(normal^r.direccion) / ps;
+                    if(escena[i_figura]->es_dielectrico()){
+                        red = (get<0>(siguiente) / 255.0) * PI * ps / (normal^r.direccion) * abs(normal^r.direccion) / ps;
+                        green = (get<1>(siguiente) / 255.0) * PI * ps / (normal^r.direccion) * abs(normal^r.direccion) / ps;
+                        blue = (get<2>(siguiente) / 255.0) * PI * ps / (normal^r.direccion) * abs(normal^r.direccion) / ps;
+                    }
+                    else{
+                        red = (get<0>(siguiente) / 255.0) * PI * get<0>(bsdf_material) * abs(normal^r.direccion) / ps;
+                        green = (get<1>(siguiente) / 255.0) * PI * get<1>(bsdf_material) * abs(normal^r.direccion) / ps;
+                        blue = (get<2>(siguiente) / 255.0) * PI * get<2>(bsdf_material)  * abs(normal^r.direccion) / ps;
+                    }
                 }
                 return std::make_tuple(red*255, green*255, blue*255);
             }
@@ -264,6 +324,10 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                 c2= sqrt(1 - n * n  * (1 - c1 * c1));
                 direccion_refractada = (n * dir_rayo) + (n * (c1 - c2)) * normal;
 
+
+                std::tuple<double, double, double> bsdf_material = fr(escena[i_figura],dir_rayo,direccion_refractada,r,normal,punto_figura);
+
+
                 r.origen = punto_refract + normal * 0.002;
                 r.direccion = direccion_refractada.normalizar();
 
@@ -272,15 +336,28 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                 rgb colores_kt = escena[i_figura]->get_colores_kt();
                 float red,green,blue;
                 if(luces.size() > 0){
-                    rgb iluminacion_luces = luces[luz_random] -> get_luz();
-                    red = (iluminacion_luces.get_red() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<0>(siguiente) / 255.0) * PI * (colores_kt.get_red()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
-                    green = (iluminacion_luces.get_green() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<1>(siguiente) / 255.0) * PI * (colores_kt.get_green()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
-                    blue = (iluminacion_luces.get_blue() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<2>(siguiente) / 255.0) * PI * (colores_kt.get_blue()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
+                    if(escena[i_figura]->es_dielectrico()){
+                        red = valor_luz * (get<0>(siguiente) / 255.0) * PI * (colores_kt.get_red()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
+                        green = valor_luz * (get<1>(siguiente) / 255.0) * PI * (colores_kt.get_green()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
+                        blue = valor_luz * (get<2>(siguiente) / 255.0) * PI * (colores_kt.get_blue()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
+                    }
+                    else{
+                        red = valor_luz * (get<0>(siguiente) / 255.0) * PI * get<0>(bsdf_material) * abs(normal^r.direccion) / pt;
+                        green = valor_luz * (get<1>(siguiente) / 255.0) * PI * get<1>(bsdf_material) * abs(normal^r.direccion) / pt;
+                        blue = valor_luz * (get<2>(siguiente) / 255.0) * PI * get<2>(bsdf_material)  * abs(normal^r.direccion) / pt;
+                    }
                 }
                 else{
-                    red = (get<0>(siguiente) / 255.0) * PI * (colores_kt.get_red()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
-                    green = (get<1>(siguiente) / 255.0) * PI * (colores_kt.get_green()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
-                    blue = (get<2>(siguiente) / 255.0) * PI * (colores_kt.get_blue()) / (normal^r.direccion) * abs(normal^r.direccion) / pt;
+                    if(escena[i_figura]->es_dielectrico()){
+                        red = (get<0>(siguiente) / 255.0) * PI * pt / (normal^r.direccion) * abs(normal^r.direccion) / pt;
+                        green = (get<1>(siguiente) / 255.0) * PI * pt / (normal^r.direccion) * abs(normal^r.direccion) / pt;
+                        blue = (get<2>(siguiente) / 255.0) * PI * pt / (normal^r.direccion) * abs(normal^r.direccion) / pt;
+                    }
+                    else{
+                        red = (get<0>(siguiente) / 255.0) * PI * get<0>(bsdf_material) * abs(normal^r.direccion) / pt;
+                        green = (get<1>(siguiente) / 255.0) * PI * get<1>(bsdf_material) * abs(normal^r.direccion) / pt;
+                        blue = (get<2>(siguiente) / 255.0) * PI * get<2>(bsdf_material)  * abs(normal^r.direccion) / pt;
+                    }
                 }
 
 
@@ -321,6 +398,10 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                 // Transformamos de coordenadas locales a globales, con la inversa y con eso tenemos el punto y direccion
                 Punto_Vector direc_global = matrizLocal*direc_local;
 
+
+                Punto_Vector aux = Punto_Vector(0,0,0,0);
+                std::tuple<double, double, double> bsdf_material = fr(escena[i_figura],dir_rayo,aux,r,normal,punto_figura);
+
                 float valor_w_normal = abs(normal^direc_global);
                 r.origen = punto_figura + normal * 0.002;
                 r.direccion = direc_global.normalizar();
@@ -333,15 +414,14 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                 rgb colores_kd = escena[i_figura]->get_colores_kd();
                 float red,green,blue;
                 if(luces.size() > 0){
-                    rgb iluminacion_luces = luces[luz_random] -> get_luz();
-                    red = (iluminacion_luces.get_red() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<0>(siguiente) / 255.0) * (colores_kd.get_red()) * valor_w_normal / pd;
-                    green = (iluminacion_luces.get_green() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<1>(siguiente) / 255.0) * (colores_kd.get_green()) * valor_w_normal / pd;
-                    blue = (iluminacion_luces.get_blue() * luces.size() * abs(normal ^ dir_rayo_nee) / (PI * distancia_a_luz * distancia_a_luz) ) + (get<2>(siguiente) / 255.0) * (colores_kd.get_blue()) * valor_w_normal / pd;
+                    red = valor_luz *  (get<0>(siguiente) / 255.0) * get<0>(bsdf_material) * PI * valor_w_normal / pd;
+                    green = valor_luz * (get<1>(siguiente) / 255.0) * get<0>(bsdf_material) * PI * valor_w_normal / pd;
+                    blue = valor_luz * (get<2>(siguiente) / 255.0) * get<0>(bsdf_material) * PI * valor_w_normal / pd;
                 }
                 else{
-                    red = (get<0>(siguiente) / 255.0) * (colores_kd.get_red()) * valor_w_normal / pd;
-                    green = (get<1>(siguiente) / 255.0) * (colores_kd.get_green()) * valor_w_normal / pd;
-                    blue = (get<2>(siguiente) / 255.0) * (colores_kd.get_blue()) * valor_w_normal / pd;
+                    red = (get<0>(siguiente) / 255.0) * get<0>(bsdf_material) * PI * valor_w_normal / pd;
+                    green = (get<1>(siguiente) / 255.0) * get<1>(bsdf_material) * PI * valor_w_normal / pd;
+                    blue = (get<2>(siguiente) / 255.0) * get<2>(bsdf_material) * PI * valor_w_normal / pd;
                 }
 
                 return std::make_tuple(red*255, green*255, blue*255);
@@ -444,8 +524,8 @@ int main(int argc, char **argv) {
         geo.push_back(new Plano(Punto_Vector(0,0,100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),gris,nada,nada,0, false,false,0 ));
         geo.push_back(new Plano(Punto_Vector(0,0,-100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),gris,nada,nada,0, false,false,0 ));
 
-        geo.push_back(new Esfera(Punto_Vector(40,20,60,1), 10, blanco,blanco,nada,0, false,false,0));
-        geo.push_back(new Esfera(Punto_Vector(40,-20,60,1), 10, nada,blanco,blanco,1.35, true,false,0));
+        geo.push_back(new Esfera(Punto_Vector(40,30,60,1), 10, nada,nada,blanco,1.35, false,false,0));
+        geo.push_back(new Esfera(Punto_Vector(40,-20,60,1), 10, nada,blanco,nada,1.35, false,false,0));
     }
     else{
         // Escena con next event estimation
@@ -461,7 +541,7 @@ int main(int argc, char **argv) {
         geo.push_back(new Esfera(Punto_Vector(40,20,60,1), 10, blanco,blanco,nada,0, false,false,0));
         geo.push_back(new Esfera(Punto_Vector(40,-20,60,1), 10, nada,blanco,blanco,1.35, true,false,0));
 
-        vector_luces.push_back(new Punto_Luz(Punto_Vector(-30,0,50,1),blanco));
+        vector_luces.push_back(new Punto_Luz(Punto_Vector(-30,0,50,1),blanco,1000));
     }
 
     // Definimos la cámara
