@@ -20,11 +20,11 @@ class Punto_Luz{
         }
 
         int get_power(){
-            return power
+            return power;
         }
        
     protected:
         Punto_Vector punto;
         rgb luz;
-        int power
+        int power;
 };

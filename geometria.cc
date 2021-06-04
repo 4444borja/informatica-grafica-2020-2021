@@ -5,7 +5,7 @@ using namespace std;
 
 class Geometria {
     public:
-        Geometria(rgb Kd, rgb Ks, rgb Kt, bool light, int p_light, double i_ref, bool dielectric){
+        Geometria(rgb Kd, rgb Ks, rgb Kt, bool light, int p_light, float i_ref, bool dielectric){
             kd.set_values(Kd.get_red(), Kd.get_green(), Kd.get_blue());
             ks.set_values(Ks.get_red(), Ks.get_green(), Ks.get_blue());
             kt.set_values(Kt.get_red(), Kt.get_green(), Kt.get_blue());
@@ -47,7 +47,7 @@ class Geometria {
         rgb get_colores_kt(){
             return kt;
         }
-        double get_refraccion(){
+        float get_refraccion(){
             return ind_ref;
         }
         
@@ -103,6 +103,6 @@ class Geometria {
         rgb kt;
         bool is_light;
         int power_light;
-        double ind_ref;
+        float ind_ref;
         bool is_dielectric;
 };

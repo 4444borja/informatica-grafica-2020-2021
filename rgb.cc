@@ -32,6 +32,18 @@ class rgb{
             return Blue;
         }
 
+        double get_max(){
+            if(Red > Blue && Red > Green){
+                return Red;
+            }
+            else if(Green > Red && Green > Blue){
+                return Green;
+            }
+            else{
+                return Blue;
+            }
+        }
+
     protected:
         double Red;
         double Blue;
