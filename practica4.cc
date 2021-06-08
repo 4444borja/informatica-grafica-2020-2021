@@ -272,16 +272,14 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
             rgb luz_directa;
             luz_directa.set_values(0,0,0);
             if(luces.size() > 0){
-                Punto_Vector hit_point = punto_figura + normal * 0.02;
+                Punto_Vector hit_point = punto_figura;
                 for(int i = 0; i < luces.size(); i++){
                     // Por cada luz que haya calculamos el punto y direccion de la misma
                     Punto_Vector light_point = luces[i]->get_punto();
                     Punto_Vector light_dir = light_point - hit_point;
-                    light_dir = light_dir.normalizar(); 
                     // Obtenemos la distancia de la luz
-                    float distancia_luz = sqrt( pow(hit_point.x - light_point.x,2) +
-                                                            pow(hit_point.y - light_point.y,2) +
-                                                            pow(hit_point.z - light_point.z,2));
+                    float distancia_luz = light_dir.modulo();
+                    light_dir = light_dir.normalizar();
                     float t_valor, distancia;
                     float distancia_min = numeric_limits<float>::max();
                     for(int j = 0; j < escena.size() ; j++){ // Comprobamos que no haya ningun objeto entre la luz y el hit
@@ -295,11 +293,13 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                         }
                     }
                     // Obtenemos la distancia mas pequeña y vemos si esa distancia es mayor a la de la luz
-                    if(distancia_luz < distancia_min){
-                        // No esta el objeto opacando el punto de luz puntual, sumammos a la luz indirecta
-                        luz_directa.set_red(luz_directa.get_red() + luces[i]->get_luz().get_red() * luces[i]->get_power() * kd.get_red() * max((normal^light_dir),0.0) / (distancia_luz*distancia_luz*PI));
-                        luz_directa.set_green(luz_directa.get_green() + luces[i]->get_luz().get_green() * luces[i]->get_power() * kd.get_green() * max((normal^light_dir),0.0) / (distancia_luz*distancia_luz*PI));
-                        luz_directa.set_blue(luz_directa.get_blue() + luces[i]->get_luz().get_blue() * luces[i]->get_power() * kd.get_blue() * max((normal^light_dir),0.0) / (distancia_luz*distancia_luz*PI));
+                    if(distancia_luz <= distancia_min){
+                        // No esta el objeto opacando el punto de luz puntual, sumamos a la luz indirecta
+                        rgb color_luz = luces[i]->get_luz();
+                        double color_rojo = luz_directa.get_red() + color_luz.get_red() * luces[i]->get_power() * kd.get_red() * max(normal^light_dir,0.0) / (distancia_luz*distancia_luz * PI);
+                        double color_verde = luz_directa.get_green() + color_luz.get_green() * luces[i]->get_power() * kd.get_green() * max(normal^light_dir,0.0) / (distancia_luz*distancia_luz * PI);
+                        double color_azul = luz_directa.get_blue() + color_luz.get_blue() * luces[i]->get_power() * kd.get_blue() * max(normal^light_dir,0.0) / (distancia_luz*distancia_luz * PI);
+                        luz_directa.set_values(color_rojo, color_verde, color_azul);
                     }
                 }
             }
@@ -381,8 +381,8 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                 return std::make_tuple(red, green, blue);
             }
             else {
-                //ruleta rusa dice que paramos, devolvemos negro
-                return std::make_tuple(0, 0, 0);
+                //ruleta rusa dice que paramos, devolvemos luz directa
+                return std::make_tuple(0 + luz_directa.get_red(), 0 + luz_directa.get_green() , 0 + luz_directa.get_blue());
             }
         }
     }
@@ -466,7 +466,7 @@ int main(int argc, char **argv) {
     rosa.set_values(255/255.0, 10/255.0, 127/255.0);
     amarillo.set_values(250/255.0, 240/255.0, 10/255.0);
     gris.set_values(0.2, 0.2, 0.2);
-    int tipo_escena = 0;
+    int tipo_escena = 1;
     if(tipo_escena == 0){
         // Escena sin next event estimation
         geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),gris,nada,nada,0, false,false,4 ));
@@ -484,7 +484,7 @@ int main(int argc, char **argv) {
     }
     else{
         // Escena sin next event estimation
-        geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),gris,nada,nada,0, false,false,4 ));
+        geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),azul,nada,nada,0, false,false,4 ));
         geo.push_back(new Plano(Punto_Vector(50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),gris,nada,nada,0, false,false,0 ));
 
         geo.push_back(new Plano(Punto_Vector(0,50,50,1),Punto_Vector(0,0,1,0),Punto_Vector(1,0,0,0),rojo,nada,nada,0, false,false,0 ));
@@ -493,9 +493,9 @@ int main(int argc, char **argv) {
         geo.push_back(new Plano(Punto_Vector(0,0,100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),gris,nada,nada,0, false,false,0 ));
         geo.push_back(new Plano(Punto_Vector(0,0,-100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),gris,nada,nada,0, false,false,0 ));
 
-        geo.push_back(new Esfera(Punto_Vector(-30,0,60,1), 10, nada,nada,blanco,1.20, false,false,0));
+        geo.push_back(new Esfera(Punto_Vector(-30,0,60,1), 10, amarillo,nada,nada,1.20, false,false,0));
 
-        vector_luces.push_back(new Punto_Luz(Punto_Vector(0,0,50,1),blanco,50000));
+        vector_luces.push_back(new Punto_Luz(Punto_Vector(0,0,50,1),blanco,25000));
     }
 
     // Definimos la cámara
