@@ -23,11 +23,11 @@ using namespace std;
 // Clase para definir un rayo
 class Ray{
     public:
-    // Un rayo tiene tanto un origen como una direccion
+    // Un rayo tiene tanto un punto origen como un vector direccion
     Punto_Vector origen;
     Punto_Vector direccion;
 
-        // Constructor
+        // Constructor de la clase rayo
         Ray (Punto_Vector _o, Punto_Vector _d) {
             origen = _o;
             direccion = _d;
@@ -36,11 +36,11 @@ class Ray{
 
 // Clase para definir una cámara
 class Camera{
-    // Una camara tiene tanto un vector u,l y f y un origen
+    // Una camara tiene tanto un vector u,l y f y un punto origen
     Punto_Vector origen, u, l, f;
 
     public:
-        // Constructor
+        // Constructor de ka clase
         Camera (Punto_Vector _c, Punto_Vector _u, Punto_Vector _l, Punto_Vector _f) {
             origen = _c;
             u = _u.normalizar();
@@ -70,6 +70,13 @@ class Camera{
 
 };
 
+/*
+ * Pre: high > low
+ * Post: Dado un valor value y un límite superior e inferior.
+ *       Si value > low y value < high, entonces devolvemos value
+ *       Si value < low devolvemos low
+ *       Si value > high devolvemos high
+ */
 double clamp(double value, double high, double low){
     if(value > high){
         return high;
@@ -79,41 +86,116 @@ double clamp(double value, double high, double low){
     }
     return value;
 }
-// Ray tracing
-// Devuelve una tupla RGB
+
+/* 
+ * Pre: El Punto_Vector Punto debe ser un punto y Normal debe ser un vectores.
+ * Post: Dado un rayo de entrada Punto_figura y un vector normal, calculamos un vector aleatorio
+ *       de salida en coordenadas globales
+ */ 
+Punto_Vector difuso(const Punto_Vector Punto_figura, const Punto_Vector Normal){
+    // Calculo de las componentes x, y y z de la matriz local de coordenadas
+    Punto_Vector vector_z;
+    Punto_Vector vector_x;
+    if(Normal.z < 0.){
+        const float a = 1.0f / (1.0f - Normal.z);
+        const float b = Normal.x * Normal.y * a;
+        vector_x = Punto_Vector(1.0f - Normal.x * Normal.x * a, -b, Normal.x, 0);
+        vector_z = Punto_Vector(b, Normal.y * Normal.y * a - 1.0f, -Normal.y, 0);
+    }
+    else{
+        const float a = 1.0f / (1.0f + Normal.z);
+        const float b = -Normal.x * Normal.y * a;
+        vector_x = Punto_Vector(1.0f - Normal.x * Normal.x * a, b, -Normal.x, 0);
+        vector_z = Punto_Vector(b, 1.0f - Normal.y * Normal.y * a, -Normal.y, 0);
+    }
+    
+
+    Matrix matrizLocal = Matrix(vector_x,Normal,vector_z,Punto_figura);
+
+    // Calculamos el numero aleatorio tanto para zeta y fi
+    float random1 =  (float) (rand())/ (RAND_MAX);
+    float random2 =  (float) (rand())/ (RAND_MAX);
+
+    float zeta = acos(sqrt(1 - random1));
+    float fi = 2 * PI * random2;
+
+    // Calculamos la direccion local aleatorio.
+    Punto_Vector direc_local = Punto_Vector(sin(zeta) * cos(fi),
+                                                cos(zeta),
+                                                sin(zeta) * sin(fi),
+                                                0);
+    // Transformamos de coordenadas locales a globales.
+    return matrizLocal*direc_local;
+
+}
+
+/* 
+ * Pre: El Punto_Vector I y Normal deben ser vectores, no puntos, ind_refrac debe ser positivo
+ * Post: Dado un rayo de entrada I, el vector normal del objeto Normal.
+ *       Calculamos un rayo de reflexión del rayo de entrada I
+ */ 
+Punto_Vector reflexion(const Punto_Vector I, const Punto_Vector Normal){
+    Punto_Vector dir_rayo_inv = Punto_Vector(-I.x,-I.y,-I.z,I.valor);
+    return (2 * (Normal ^ dir_rayo_inv) * Normal + I);
+}
+
+/* 
+ * Pre: El Punto_Vector I y Normal deben ser vectores, no puntos, ind_refrac debe ser positivo
+ * Post: Dado un rayo de entrada I, el vector normal del objeto Normal y un indice de refraccion ind_refrac
+ *       Calculamos la direccion refractada en base a si el rayo está dentro o fuera del objeto.
+ */ 
 Punto_Vector refraccion(const Punto_Vector I, const Punto_Vector Normal, const float ind_refrac){
+    // Calculamos el cos para determinar si el objeto esta dentro o fuera, debe estar entre -1 y 1
     double cos = I^Normal;
     float cosi = clamp(cos, 1, -1); 
     float etai = 1, etat = ind_refrac; 
     Punto_Vector n = Normal; 
+    // Si es menor que 0, estamos fuera del objeto, por lo que negamos
+    // Si es mayor o igual que 0, estamos dentro del objeto por lo que tenemos que negar la Normal y cambiar los índices n1 y n2
     if (cosi < 0) { cosi = -cosi; } else { swap(etai, etat); n= Punto_Vector(-Normal.x,-Normal.y,-Normal.z,Normal.valor); } 
+    // Calculamos n1 / n2.
     float eta = etai / etat; 
+    // Si el valor de k es negativo, estamos en un caso de refraccion total internal
+    // Por lo que no hay refraccion y devolvemos 0.
     float k = 1 - eta * eta * (1 - cosi * cosi); 
     return k < 0 ? Punto_Vector(0,0,0,0) : eta * I + (eta * cosi - sqrtf(k)) * n;
-
 }
 
+/* 
+ * Pre: El Punto_Vector I y Normal deben ser vectores, no puntos, ind_refrac debe ser positivo
+ * Post: Dado un rayo de entrada I, el vector normal del objeto Normal y un indice de refraccion ind_refrac
+ *       Calculamos las constantes de reflexion y refraccion del objeto según las ecucaciones de Fresnel
+ */ 
 float fresnel(const Punto_Vector I, const Punto_Vector Normal, const float ind_refrac){
+    // Calculamos el producto vectorial para saber si estamos dentro o fuera del objeto
     double cos = I^Normal;
     float cosi = clamp(cos, 1, -1);  
     float etai = 1, etat = ind_refrac;
+    // Si cosi es mayor que 0, estamos fuera, cambiamos los índices 
     if (cosi > 0) {swap(etai, etat); } 
     // Calculamos sint utilizando la ley de snell
     float sint = etai / etat * sqrtf(max(0.f, 1 - cosi * cosi)); 
-    // Total internal reflection
+    // Reflexión total interna, devolvemos 1.
     if (sint >= 1) { 
         return 1; 
     } 
     else { 
+        // Calculamos kr según las ecuaciones de Fresnel ya que debido a la conservacion de la energía
+        // kt = kr - 1, por lo que solo tenemos que devolver ese valor
         float cost = sqrtf(max(0.f, 1 - sint * sint)); 
         cosi = fabsf(cosi); 
         float Rs = ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost)); 
         float Rp = ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost)); 
         return (Rs * Rs + Rp * Rp) / 2; 
     } 
-    // As a consequence of the conservation of energy, transmittance is given by:
-    // kt = 1 - kr;
 }
+
+/*
+ * Pre: 
+ * Post: Dado una escena, un rayo r y una cantidad de puntos de luces puntuales, luces.
+ *       Devolvemos una tupla RGB según que objeto de la escena ha rebotado el rayo y que
+ *       propiedades tiene ese objeto 
+ */
 std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_Luz*> luces){
     
     // Definimos tanto el origen como la direccion del rayo
@@ -127,10 +209,10 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
     for(int i = 0; i < escena.size() ; i++){
         float t_valor, distancia;
         bool choca = escena[i]->get_interseccion(origen_rayo,dir_rayo, distancia, t_valor);
-        // Si choca comprobamos que la distancia es menor a la menor de todas las distancias
+        // Si choca comprobamos que la distancia es menor a la que tenemos
         if(choca){
             if(distancia < distancia_min){
-                // Guardamos tanto la distancia minima, como con que figura choca como el valor de t
+                // Guardamos tanto la distancia minima, como con que figura choca como el valor de t de la misma
                 distancia_min = distancia;
                 i_figura = i;
                 t_valor_min = t_valor;
@@ -139,17 +221,18 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
     }
     if(t_valor_min != numeric_limits<float>::max()){
         if (escena[i_figura]->es_luz() ) {
-            // Ha intersectado con una figura que emite luz. Multiplicamos el color de la figura con la potencia del objeto
+            // Ha intersectado con una figura que emite luz. Multiplicamos el color de la figura con la potencia del objeto.
             rgb light = escena[i_figura]->get_colores_kd();
             return std::make_tuple(light.get_red()*escena[i_figura]->get_p_light(), 
                             light.get_green()*escena[i_figura]->get_p_light(), 
                             light.get_blue()*escena[i_figura]->get_p_light());  
         }
         else {
-            // Ha intersectado con otro objeto que no emite luz. Calculamos la luz directa y luz indirecta si es el caso
-            // Punto en coordenadas globales
+            // Ha intersectado con otro objeto que no emite luz. Calculamos la luz directa y luz indirecta si es el caso.
+            // Punto en coordenadas globales de la figura con la que hemos rebotado
             Punto_Vector punto_figura = origen_rayo + t_valor_min*dir_rayo;
 
+            // Comprobamos si es una esfera o un plano
             if (dynamic_cast<Esfera*>(escena[i_figura]) == nullptr)
             {
                 // no es una esfera -> es un PLANO
@@ -170,6 +253,7 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                 normal = normal.normalizar();
             }
             rgb kd, ks, kt;
+            // Si es dielectrico tenemos que calcular ks y kt segun las ecuaciones de Fresnel
             if(escena[i_figura]->es_dielectrico()){
 
                 float fresnel_kr = fresnel(dir_rayo,normal,escena[i_figura]->get_refraccion());
@@ -178,40 +262,48 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                 ks.set_values(fresnel_kr,fresnel_kr,fresnel_kr);
                 kt.set_values(fresnel_kt,fresnel_kt,fresnel_kt);
             }
-            else{
+            else{ // Si no es dielectrico entonces obtenemos las propiedades segun el objeto
                 kd = escena[i_figura]->get_colores_kd();
                 ks = escena[i_figura]->get_colores_ks();
                 kt = escena[i_figura]->get_colores_kt();
             }
 
-            // Next event estimation, calculamos la luz indirecta de nuestra escena
-
-            rgb luz_indirecta;
-            luz_indirecta.set_values(0,0,0);
+            // Next event estimation, calculamos la luz directa de nuestra escena
+            rgb luz_directa;
+            luz_directa.set_values(0,0,0);
             if(luces.size() > 0){
                 Punto_Vector hit_point = punto_figura + normal * 0.02;
                 for(int i = 0; i < luces.size(); i++){
+                    // Por cada luz que haya calculamos el punto y direccion de la misma
                     Punto_Vector light_point = luces[i]->get_punto();
                     Punto_Vector light_dir = light_point - hit_point;
                     light_dir = light_dir.normalizar(); 
+                    // Obtenemos la distancia de la luz
                     float distancia_luz = sqrt( pow(hit_point.x - light_point.x,2) +
                                                             pow(hit_point.y - light_point.y,2) +
                                                             pow(hit_point.z - light_point.z,2));
-                    for(int j = 0; j < escena.size() ; j++){
-                        float t_valor, distancia;
+                    float t_valor, distancia;
+                    float distancia_min = numeric_limits<float>::max();
+                    for(int j = 0; j < escena.size() ; j++){ // Comprobamos que no haya ningun objeto entre la luz y el hit
                         bool choca = escena[j]->get_interseccion(hit_point,light_dir, distancia, t_valor);
-                        // Si choca comprobamos que la distancia es menor a la menor de todas las distancias
+                        // Si choca comprobamos que la distancia es menor a la menor de todas las distancias de la direccion de la luz
                         if(choca){
-                            if(distancia_luz < distancia){
-                                luz_indirecta.set_red(luz_indirecta.get_red() + luces[i]->get_luz().get_red() * luces[i]->get_power() * kd.get_red() * max((normal^light_dir),0.0) / (distancia_luz*distancia_luz*PI));
-                                luz_indirecta.set_green(luz_indirecta.get_green() + luces[i]->get_luz().get_green() * luces[i]->get_power() * kd.get_green() * max((normal^light_dir),0.0) / (distancia_luz*distancia_luz*PI));
-                                luz_indirecta.set_blue(luz_indirecta.get_blue() + luces[i]->get_luz().get_blue() * luces[i]->get_power() * kd.get_blue() * max((normal^light_dir),0.0) / (distancia_luz*distancia_luz*PI));
+                            if(distancia < distancia_min){
+                                // Guardamos tanto la distancia minima
+                                distancia_min = distancia;
                             }
                         }
                     }
+                    // Obtenemos la distancia mas pequeña y vemos si esa distancia es mayor a la de la luz
+                    if(distancia_luz < distancia_min){
+                        // No esta el objeto opacando el punto de luz puntual, sumammos a la luz indirecta
+                        luz_directa.set_red(luz_directa.get_red() + luces[i]->get_luz().get_red() * luces[i]->get_power() * kd.get_red() * max((normal^light_dir),0.0) / (distancia_luz*distancia_luz*PI));
+                        luz_directa.set_green(luz_directa.get_green() + luces[i]->get_luz().get_green() * luces[i]->get_power() * kd.get_green() * max((normal^light_dir),0.0) / (distancia_luz*distancia_luz*PI));
+                        luz_directa.set_blue(luz_directa.get_blue() + luces[i]->get_luz().get_blue() * luces[i]->get_power() * kd.get_blue() * max((normal^light_dir),0.0) / (distancia_luz*distancia_luz*PI));
+                    }
                 }
             }
-            // Calculamos el valor del material
+            // Calculamos las probabilidades para la ruleta rusa
             double pd = kd.get_max();
             double ps = ks.get_max();
             double pt = kt.get_max();
@@ -225,10 +317,7 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
 
             if(num_aleatorio < ps){
                 // Si es material especular
-                dir_rayo = dir_rayo.normalizar();
-                Punto_Vector dir_rayo_inv = Punto_Vector(-dir_rayo.x,-dir_rayo.y,-dir_rayo.z,dir_rayo.valor);
-                Punto_Vector direccion_reflejada = (2 * (normal ^ dir_rayo_inv) * normal + dir_rayo);
-
+                Punto_Vector direccion_reflejada = reflexion(dir_rayo, normal);
                 r.origen = punto_figura + normal * 0.002;
                 r.direccion = direccion_reflejada.normalizar();
 
@@ -239,15 +328,17 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                 green = get<1>(siguiente) * ks.get_green() / ps;
                 blue = get<2>(siguiente) * ks.get_blue() / ps;
 
-                red = luz_indirecta.get_red() + red;
-                green = luz_indirecta.get_green() + green;
-                blue = luz_indirecta.get_blue() + blue;
+                red = luz_directa.get_red() + red;
+                green = luz_directa.get_green() + green;
+                blue = luz_directa.get_blue() + blue;
                 return std::make_tuple(red, green, blue);
             }
             else if(num_aleatorio < (ps + pt)){
+                // Material refractante
+                // Comprobamos si estamos dentro o fuera del material
                 double cos = r.direccion^normal;
-                bool fuera = cos < 0;
-                if(!fuera){
+                bool dentro = cos < 0;
+                if(!dentro){
                     r.origen = punto_figura + normal * 0.02;
                 }
                 else{
@@ -265,64 +356,28 @@ std::tuple<int,int,int> funcionL(vector<Geometria*> escena, Ray r, vector<Punto_
                 green = get<1>(siguiente) * kt.get_green() / pt;
                 blue = get<2>(siguiente) * kt.get_blue() / pt;
 
-                red = luz_indirecta.get_red() + red;
-                green = luz_indirecta.get_green() + green;
-                blue = luz_indirecta.get_blue() + blue;
+                red = luz_directa.get_red() + red;
+                green = luz_directa.get_green() + green;
+                blue = luz_directa.get_blue() + blue;
                 return std::make_tuple(red, green, blue);
             }
             else if( num_aleatorio < (ps+pt+pd)){
             
 
                 // Material difuso
-                Punto_Vector vector_z,vector_x;
-               if(normal.z < 0.){
-                    const float a = 1.0f / (1.0f - normal.z);
-                    const float b = normal.x * normal.y * a;
-                    vector_x = Punto_Vector(1.0f - normal.x * normal.x * a, -b, normal.x, 0);
-                    vector_z = Punto_Vector(b, normal.y * normal.y * a - 1.0f, -normal.y, 0);
-                }
-                else{
-                    const float a = 1.0f / (1.0f + normal.z);
-                    const float b = -normal.x * normal.y * a;
-                    vector_x = Punto_Vector(1.0f - normal.x * normal.x * a, b, -normal.x, 0);
-                    vector_z = Punto_Vector(b, 1.0f - normal.y * normal.y * a, -normal.y, 0);
-                }
-                
-
-                Matrix matrizLocal = Matrix(vector_x,normal,vector_z,punto_figura);
-                // PARA MATERIAL DIFUSO
-                ////////////////////////
-                float random1 =  (float) (rand())/ (RAND_MAX);
-                float random2 =  (float) (rand())/ (RAND_MAX);
-
-                float zeta = acos(sqrt(1 - random1));
-                float fi = 2 * PI * random2;
-
-                Punto_Vector direc_local = Punto_Vector(sin(zeta) * cos(fi),
-                                                            cos(zeta),
-                                                            sin(zeta) * sin(fi),
-                                                            0);
-                // Transformamos de coordenadas locales a globales, con la inversa y con eso tenemos el punto y direccion
-                Punto_Vector direc_global = matrizLocal*direc_local;
-
-
-                Punto_Vector aux = Punto_Vector(0,0,0,0);
-
-                float valor_w_normal = abs(normal^direc_global);
+                Punto_Vector direc_global = difuso(punto_figura, normal);
                 r.origen = punto_figura + normal * 0.002;
                 r.direccion = direc_global.normalizar();
-            
                 // el rayo sigue
                 std::tuple<int, int, int> siguiente = funcionL(escena,r,luces);
-
                 float red,green,blue;
                 red = get<0>(siguiente) * kd.get_red() / pd;
                 green = get<1>(siguiente) * kd.get_green() / pd;
                 blue = get<2>(siguiente) * kd.get_blue() / pd;
 
-                red = luz_indirecta.get_red() + red;
-                green = luz_indirecta.get_green() + green;
-                blue = luz_indirecta.get_blue() + blue;
+                red = luz_directa.get_red() + red;
+                green = luz_directa.get_green() + green;
+                blue = luz_directa.get_blue() + blue;
                 return std::make_tuple(red, green, blue);
             }
             else {
@@ -414,31 +469,33 @@ int main(int argc, char **argv) {
     int tipo_escena = 0;
     if(tipo_escena == 0){
         // Escena sin next event estimation
-        geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),blanco,nada,nada,0, false,true,4 ));
+        geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),gris,nada,nada,0, false,false,4 ));
         geo.push_back(new Plano(Punto_Vector(50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),gris,nada,nada,0, false,false,0 ));
 
-        geo.push_back(new Plano(Punto_Vector(0,50,50,1),Punto_Vector(0,0,1,0),Punto_Vector(1,0,0,0),verde,nada,nada,0, false,false,0 ));
-        geo.push_back(new Plano(Punto_Vector(0,-50,50,1),Punto_Vector(0,0,-1,0),Punto_Vector(1,0,0,0),rojo,nada,nada,0, false,false,0 ));
+        geo.push_back(new Plano(Punto_Vector(0,50,50,1),Punto_Vector(0,0,1,0),Punto_Vector(1,0,0,0),blanco,nada,nada,0, false,true,4 ));
+        geo.push_back(new Plano(Punto_Vector(0,-50,50,1),Punto_Vector(0,0,-1,0),Punto_Vector(1,0,0,0),verde,nada,nada,0, false,false,0 ));
 
         geo.push_back(new Plano(Punto_Vector(0,0,100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),gris,nada,nada,0, false,false,0 ));
         geo.push_back(new Plano(Punto_Vector(0,0,-100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),gris,nada,nada,0, false,false,0 ));
 
-        geo.push_back(new Esfera(Punto_Vector(40,-40,60,1), 10, azul,azul,nada,1.5, false,false,0));
+        //geo.push_back(new Esfera(Punto_Vector(40,-25,60,1), 10, nada,blanco,nada,1.35, false,false,0));
+        //geo.push_back(new Esfera(Punto_Vector(40,25,60,1), 10, nada,blanco,blanco,1.35, true,false,0));
+        geo.push_back(new Esfera(Punto_Vector(0,-25,60,1), 20, nada,nada,blanco,2.42, false,false,0));
     }
     else{
         // Escena sin next event estimation
         geo.push_back(new Plano(Punto_Vector(-50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),gris,nada,nada,0, false,false,4 ));
         geo.push_back(new Plano(Punto_Vector(50,0,50,1),Punto_Vector(0,0,1,0),Punto_Vector(0,1,0,0),gris,nada,nada,0, false,false,0 ));
 
-        geo.push_back(new Plano(Punto_Vector(0,50,50,1),Punto_Vector(0,0,1,0),Punto_Vector(1,0,0,0),verde,nada,nada,0, false,false,0 ));
-        geo.push_back(new Plano(Punto_Vector(0,-50,50,1),Punto_Vector(0,0,-1,0),Punto_Vector(1,0,0,0),rojo,nada,nada,0, false,false,0 ));
+        geo.push_back(new Plano(Punto_Vector(0,50,50,1),Punto_Vector(0,0,1,0),Punto_Vector(1,0,0,0),rojo,nada,nada,0, false,false,0 ));
+        geo.push_back(new Plano(Punto_Vector(0,-50,50,1),Punto_Vector(0,0,-1,0),Punto_Vector(1,0,0,0),verde,nada,nada,0, false,false,0 ));
 
         geo.push_back(new Plano(Punto_Vector(0,0,100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),gris,nada,nada,0, false,false,0 ));
         geo.push_back(new Plano(Punto_Vector(0,0,-100,1),Punto_Vector(0,1,0,0),Punto_Vector(1,0,0,0),gris,nada,nada,0, false,false,0 ));
 
-        geo.push_back(new Esfera(Punto_Vector(40,-40,60,1), 10, nada,nada,blanco,1.5, false,false,0));
+        geo.push_back(new Esfera(Punto_Vector(-30,0,60,1), 10, nada,nada,blanco,1.20, false,false,0));
 
-        vector_luces.push_back(new Punto_Luz(Punto_Vector(0,0,50,1),blanco,10000));
+        vector_luces.push_back(new Punto_Luz(Punto_Vector(0,0,50,1),blanco,50000));
     }
 
     // Definimos la cámara
